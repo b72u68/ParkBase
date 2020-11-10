@@ -24,12 +24,11 @@ public class Initializer {
 		url.concat(db);
 		System.out.print("Username: ");
 		user = sc.nextLine();
-		System.out.println("Password: ");
+		System.out.print("Password: ");
 		password = sc.nextLine();
 		
 		try (Connection con = DriverManager.getConnection(url, user, password);
-			Statement st = con.createStatement();
-			ResultSet rs = st.executeQuery("DROP TABLE IF EXISTS Author;\r\n" + 
+				PreparedStatement pst = con.prepareStatement("DROP TABLE IF EXISTS Author;\r\n" + 
 					"\r\n" + 
 					"CREATE TABLE IF NOT EXISTS Author (\r\n" + 
 					"	id serial PRIMARY KEY,\r\n" + 
@@ -40,9 +39,7 @@ public class Initializer {
 					"INSERT INTO Author(id, name) VALUES(2, 'Honore de Balzac');\r\n" + 
 					"INSERT INTO Author(id, name) VALUES(3, 'Patrick Crowe');"
 					+ "SELECT * FROM Author")) {
-				while (rs.next()) {
-					System.out.println(rs.getString(2));
-				} 
+				
 		} catch (SQLException ex) {
 			Logger lgr = Logger.getLogger(Initializer.class.getName());
 			lgr.log(Level.SEVERE, ex.getMessage(), ex);
@@ -98,6 +95,12 @@ public class Initializer {
 			pst.setInt(1, id);
 			pst.setString(2, author);
 			pst.executeUpdate();
+			
+			Statement st = con.createStatement();
+			ResultSet rs = st.executeQuery("SELECT * FROM Author");
+			while (rs.next()) {
+				System.out.println(rs.getString(2));
+			} 
 			
 		} catch (SQLException ex) {
 			Logger lgr = Logger.getLogger(Initializer.class.getName());
