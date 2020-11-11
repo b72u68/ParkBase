@@ -32,7 +32,8 @@ create table parking.member (
     lot_id char(1),
     spot_id int,
     primary key (user_id),
-    foreign key (user_id) references parking.user (user_id)
+    foreign key (user_id) references parking.user (user_id),
+    foreign key (lot_id, spot_id) references parking.spot (lot_id, spot_id)
 );
 
 create table parking.employee (
