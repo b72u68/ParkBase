@@ -18,35 +18,37 @@ create schema parking;
 --drop table if exists parking.user cascade;
 
 create table parking.user (
-    user_id varchar(20),
-    name varchar(30),
-    password varchar(20),
+    user_id varchar(20) not null,
+    name varchar(30) not null,
+    password varchar(20) not null,
     login_time timestamp,
     logout_time timestamp,
     primary key (user_id)
 );
 
 create table parking.member (
-    user_id varchar(20),
+    user_id varchar(20) not null,
     registered_license_plate char(7),
     lot_id char(1),
     spot_id int,
     primary key (user_id),
-    foreign key (user_id) references parking.user (user_id),
-    foreign key (lot_id, spot_id) references parking.spot (lot_id, spot_id)
+    foreign key (user_id) references parking.user (user_id) on delete cascade,
+    foreign key (lot_id, spot_id) references parking.spot (lot_id, spot_id) on delete cascade on update cascade
 );
 
 create table parking.employee (
-    employee_id varchar(20),
-    name varchar(30),
+    employee_id varchar(20) not null,
+    name varchar(30) not null,
+    password varchar(20) not null,
     salary numeric(8,2),
-    type varchar(10),
+    type varchar(10) not null ,
+    check (type in ("staff", "admin")),
     primary key (employee_id)
 );
 
 /* TODO: Add remain_time() attribute */
 create table parking.temporary_license_plate (
-    user_id varchar(20),
+    user_id varchar(20) not null,
     plate_number char(7),
     time_created timestamp,
     primary key (user_id, plate_number),
@@ -54,16 +56,16 @@ create table parking.temporary_license_plate (
 );
 
 create table parking.update_form (
-    user_id varchar(20),
+    user_id varchar(20) not null,
     time_made timestamp,
     field_to_update varchar(20),
     new_value varchar(30),
     primary key (user_id, time_made),
-    foreign key (user_id) references parking.user (user_id)
+    foreign key (user_id) references parking.user (user_id) on delete cascade
 );
 
 create table parking.parking_lot (
-    lot_id char(1),
+    lot_id char(1) not null,
     guest_fee numeric(6,2),
     membership_fee numeric(6,2),
     upkeep_cost numeric(6,2),
@@ -72,27 +74,27 @@ create table parking.parking_lot (
 );
 
 create table parking.spot (
-    spot_id int,
-    lot_id char(1),
+    spot_id int not null,
+    lot_id char(1) not null,
     primary key (spot_id, lot_id),
-    foreign key (lot_id) references parking.parking_lot (lot_id)
+    foreign key (lot_id) references parking.parking_lot (lot_id) on delete cascade on update cascade
 );
 
 create table parking.reservation (
-    user_id varchar(20),
+    user_id varchar(20) not null,
     time_created timestamp,
     reservation_time_in timestamp,
     reservation_time_out timestamp,
     license_plate char(7),
     application_type varchar(10),
     temporary bit,
-    employee_id varchar(20),
-    lot_id char(1),
-    spot_id int,
+    employee_id varchar(20) not null,
+    lot_id char(1) not null,
+    spot_id int not null,
     primary key (user_id, time_created),
-    foreign key (user_id) references parking.user (user_id),
-    foreign key (employee_id) references parking.employee (employee_id),
-    foreign key (lot_id, spot_id) references parking.spot (lot_id, spot_id)
+    foreign key (user_id) references parking.user (user_id) on delete cascade,
+    foreign key (employee_id) references parking.employee (employee_id) on delete cascade,
+    foreign key (lot_id, spot_id) references parking.spot (lot_id, spot_id) on delete cascade on update cascade
 );
 
 /* Add foreign key spot (lot_id, spot_id) to member */
@@ -108,7 +110,7 @@ create view parking.lot_ratios as (with total_lot_spots (lot_id, num_spot) as (s
 	with total_drive_in (lot_id, num_dv) as (select (lot_id, count(user_id, time_created)) from parking.reservation where application_type = 'drive-in' group by lot_id)
 	select (lot_id, num_mem/num_spot, num_onl/num_spot, num_dv/num_spot) from total_lot_spots natural join total_members natural join total_online natural join total_drive_in);
 create view parking.times as select (user_id, login_time, logout_time) from parking.user;
-	
+
 create role r_user;
 create role staff;
 create role admin;
@@ -116,5 +118,4 @@ grant insert on parking.update_form, parking.reservation to r_user, staff, admin
 grant select on parking.booking to r_user, admin;
 grant select, delete, update on parking.update_form to staff, admin;
 grant select, delete, insert, update on parking.user, parking.member, parking.temporary_license_plate to admin;
-grant all on parking.booking, parking.member_pay, parking.guest_pay, parking.lot_ratios, parking.times to adming;
-
+grant all on parking.booking, parking.member_pay, parking.guest_pay, parking.lot_ratios, parking.times to admin;
