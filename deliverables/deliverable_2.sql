@@ -108,9 +108,13 @@ create table parking.reservation (
 alter table parking.member
 add foreign key (lot_id, spot_id) references parking.spot (lot_id, spot_id);
 
-create view parking.booking as 
+--view for checking what spots are available at what time
+create view parking.booking as 											
 	select reservation_time_in, reservation_time_out, spot_id, lot_id
 	from parking.reservation;
+	
+--the following 4 tables are for running a report
+--member_pay and guest_pay will be combined to check the total revenue
 create view parking.member_pay as 
 	select lot_id, mem_count*membership_fee 
 	from (
@@ -129,6 +133,7 @@ create view parking.guest_pay as
 			from parking.reservation where temporary = '1' group by lot_id
 		) as foo natural join parking.parking_lot
 	) as bar;
+	
 create view parking.lot_ratios as (
 	with total_lot_spots (lot_id, num_spot) as (
 		select lot_id, count(spot_id) 
@@ -149,13 +154,23 @@ create view parking.lot_ratios as (
 	select lot_id, num_mem/num_spot as ratio_mem, num_onl/num_spot as ratio_onl, num_dv/num_spot as ratio_dv
 	from total_lot_spots natural join total_members natural join total_online natural join total_drive_in
 );
+
 create view parking.times as select user_id, login_time, logout_time from parking.user;
+--end report views
 
 create role r_user;
 create role staff;
 create role admin;
+
+--allow everyone to create an update_form and a reservation or view the bookings
 grant insert on parking.update_form, parking.reservation to r_user, staff, admin;
-grant select on parking.booking to r_user, admin;
+grant select on parking.booking to r_user, staff, admin;
+
+--allow staff members to view, delete, and update update_forms in addition to their permission to insert one earlier
 grant select, delete, update on parking.update_form to staff, admin;
+
+--allow only admins to edit profile information
 grant select, delete, insert, update on parking.user, parking.member, parking.temporary_license_plate to admin;
+
+--allow only admins to view the report views
 grant all on parking.booking, parking.member_pay, parking.guest_pay, parking.lot_ratios, parking.times to admin;
