@@ -1,7 +1,7 @@
 /* TODO:
     - Write documentation
     - Add constraints to attributes
-    - Add privileges/roles (staff, administrator)
+
  */
 
 create schema parking;
@@ -98,3 +98,23 @@ create table parking.reservation (
 /* Add foreign key spot (lot_id, spot_id) to member */
 alter table parking.member
 add foreign key (lot_id, spot_id) references parking.spot (lot_id, spot_id);
+
+create view parking.booking as select (reservation_time_in, reservation_time_out, spot_id, lot_id) from parking.reservation;
+create view parking.member_pay as select (lot_id, mem_count*membership_fee) from (select (lot_id, count(user_id) as mem_count) from parking.member group by lot_id) natural join parking.parking_lot;
+create view parking.guest_pay as select (lot_id, guest_count*guest_fee) from (select (lot_id, count(user_id, time_created) as guest_count) from parking.reservation where temporary = 1) natural join parking.parking_lot;
+create view parking.lot_ratios as (with total_lot_spots (lot_id, num_spot) as (select (lot_id, count(spot_id)) from parking.parking_lot group by lot_id),
+	with total_members (lot_id, num_mem) as (select (lot_id, count(user_id)) from parking.member group by lot_id),
+	with total_online (lot_id, num_onl) as (select (lot_id, count(user_id, time_created)) from parking.reservation where application_type = 'online' group by lot_id),
+	with total_drive_in (lot_id, num_dv) as (select (lot_id, count(user_id, time_created)) from parking.reservation where application_type = 'drive-in' group by lot_id)
+	select (lot_id, num_mem/num_spot, num_onl/num_spot, num_dv/num_spot) from total_lot_spots natural join total_members natural join total_online natural join total_drive_in);
+create view parking.times as select (user_id, login_time, logout_time) from parking.user;
+	
+create role r_user;
+create role staff;
+create role admin;
+grant insert on parking.update_form, parking.reservation to r_user, staff, admin;
+grant select on parking.booking to r_user, admin;
+grant select, delete, update on parking.update_form to staff, admin;
+grant select, delete, insert, update on parking.user, parking.member, parking.temporary_license_plate to admin;
+grant all on parking.booking, parking.member_pay, parking.guest_pay, parking.lot_ratios, parking.times to adming;
+
