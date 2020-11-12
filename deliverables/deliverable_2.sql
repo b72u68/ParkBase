@@ -1,7 +1,6 @@
 /* TODO:
     - Write documentation
     - Add constraints to attributes
-
  */
 
 create schema parking;
