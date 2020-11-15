@@ -43,8 +43,7 @@ public class Initializer {
 			ex.printStackTrace();
 		}
 		
-		
-		
+		sc.close();
 	}
 
 }
