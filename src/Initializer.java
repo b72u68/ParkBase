@@ -36,10 +36,7 @@ public class Initializer {
 			Reader bf = new BufferedReader(new FileReader("deliverables/deliverable_2.sql"));
 
 			sr.runScript(bf);
-
-            MockData data = new MockData(con);
-            System.out.println("Insert mock data...");
-            data.insertAllData();
+            insertMockData(con);
 
 		} catch (SQLException ex) {
 			Logger lgr = Logger.getLogger(Initializer.class.getName());
@@ -51,4 +48,10 @@ public class Initializer {
 
 		sc.close();
 	}
+
+    public static void insertMockData(Connection connection) {
+        MockData data = new MockData(connection);
+        System.out.println("Inserting mock data...");
+        data.insertAllData();
+    }
 }

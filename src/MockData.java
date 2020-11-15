@@ -58,7 +58,7 @@ public class MockData {
                 pStmt.executeUpdate();
             }
 
-            System.out.println("Insert user data successful!");
+            System.out.println("Insert user data successfully!");
             userData.close();
 
         } catch (SQLException ex) {
@@ -98,7 +98,7 @@ public class MockData {
                 pStmt.executeUpdate();
             }
 
-            System.out.println("Insert member data successful!");
+            System.out.println("Insert member data successfully!");
             memberData.close();
 
         } catch (SQLException ex) {
@@ -135,7 +135,7 @@ public class MockData {
                 pStmt.executeUpdate();
             }
 
-            System.out.println("Insert lot data successful!");
+            System.out.println("Insert lot data successfully!");
             lotData.close();
 
         } catch (SQLException ex) {
@@ -168,7 +168,7 @@ public class MockData {
                 pStmt.executeUpdate();
             }
 
-            System.out.println("Insert spot data successful!");
+            System.out.println("Insert spot data successfully!");
             spotData.close();
 
         } catch (SQLException ex) {
@@ -207,7 +207,7 @@ public class MockData {
                 pStmt.executeUpdate();
             }
 
-            System.out.println("Insert employee data successful!");
+            System.out.println("Insert employee data successfully!");
             employeeData.close();
 
         } catch (SQLException ex) {
@@ -243,7 +243,7 @@ public class MockData {
                 pStmt.executeUpdate();
             }
 
-            System.out.println("Insert temporary license plate data successful!");
+            System.out.println("Insert temporary license plate data successfully!");
             plateData.close();
 
         } catch (SQLException ex) {
@@ -284,7 +284,7 @@ public class MockData {
                 pStmt.executeUpdate();
             }
 
-            System.out.println("Insert update form data successful!");
+            System.out.println("Insert update form data successfully!");
             formData.close();
 
         } catch (SQLException ex) {
@@ -335,7 +335,7 @@ public class MockData {
                 pStmt.executeUpdate();
             }
 
-            System.out.println("Insert reservation data successful!");
+            System.out.println("Insert reservation data successfully!");
             reservationData.close();
 
         } catch (SQLException ex) {
