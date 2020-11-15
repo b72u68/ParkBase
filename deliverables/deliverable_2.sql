@@ -3,18 +3,28 @@
     - Add constraints to attributes
  */
 
---create schema parking;
+create schema if not exists parking;
 
 /* For debugging relation: To drop table, remove '--' and run the command */
 
-drop role if exists r_user;
-drop role if exists staff;
-drop role if exists admin;
+revoke all privileges on parking.reservation from r_user, staff, admin;
+revoke all privileges on parking.update_form from r_user, staff, admin;
+revoke all privileges on parking.member from admin;
+revoke all privileges on parking.temporary_license_plate from admin;
+revoke all privileges on parking.user from admin;
+
+revoke all privileges on parking.member_pay from admin;
+
 drop view if exists parking.booking;
 drop view if exists parking.mem_pay;
 drop view if exists parking.guest_pay;
 drop view if exists parking.lot_ratios;
 drop view if exists parking.times;
+
+drop role if exists r_user;
+drop role if exists staff;
+drop role if exists admin;
+
 drop table if exists parking.parking_lot cascade;
 drop table if exists parking.spot cascade;
 drop table if exists parking.reservation;
@@ -93,7 +103,7 @@ create table parking.reservation (
     reservation_time_in timestamp,
     reservation_time_out timestamp,
     license_plate char(7),
-    application_type varchar(10) check (application_type in ("online", "drive in", "member")),
+    application_type varchar(10) check (application_type in ('online', 'drive in', 'member')),
     employee_id char(7) not null,
     lot_id char(1) not null,
     spot_id int not null,
@@ -103,13 +113,17 @@ create table parking.reservation (
     foreign key (lot_id, spot_id) references parking.spot (lot_id, spot_id) on delete cascade on update cascade
 );
 
---view for checking what spots are available at what time
+/*
+    view for checking what spots are available at what time
+*/
 create view parking.booking as
 	select reservation_time_in, reservation_time_out, spot_id, lot_id
 	from parking.reservation;
 
---the following 4 tables are for running a report
---member_pay and guest_pay will be combined to check the total revenue
+/*
+    the following 4 tables are for running a report
+    member_pay and guest_pay will be combined to check the total revenue
+*/
 create view parking.member_pay as
 	select lot_id, mem_count*membership_fee
 	from (
@@ -119,6 +133,7 @@ create view parking.member_pay as
 			from parking.member group by lot_id
 		) as foo natural join parking.parking_lot
 	) as bar;
+
 create view parking.guest_pay as
 	select lot_id, guest_count*guest_fee
 	from (
@@ -151,21 +166,30 @@ create view parking.lot_ratios as (
 );
 
 create view parking.times as select user_id, login_time, logout_time from parking.user;
---end report views
+/* end report views */
 
 create role r_user;
 create role staff;
 create role admin;
 
---allow everyone to create an update_form and a reservation or view the bookings
+/*
+    allow everyone to create an update_form and a reservation or view the bookings
+*/
 grant insert on parking.update_form, parking.reservation to r_user, staff, admin;
 grant select on parking.booking to r_user, staff, admin;
 
---allow staff members to view, delete, and update update_forms in addition to their permission to insert one earlier
+/*
+    allow staff members to view, delete, and update update_forms in addition to
+    their permission to insert one earlier
+*/
 grant select, delete, update on parking.update_form to staff, admin;
 
---allow only admins to edit profile information
+/*
+    allow only admins to edit profile information
+*/
 grant select, delete, insert, update on parking.user, parking.member, parking.temporary_license_plate to admin;
 
---allow only admins to view the report views
+/*
+    allow only admins to view the report views
+*/
 grant all on parking.booking, parking.member_pay, parking.guest_pay, parking.lot_ratios, parking.times to admin;

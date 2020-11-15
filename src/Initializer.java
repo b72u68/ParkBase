@@ -12,14 +12,14 @@ import java.util.logging.Logger;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 public class Initializer {
-	
+
 	public static void main(String[] args) {
 
 		String url = "jdbc:postgresql://localhost:5432/";
 		String dbUsername = "";
 		String dbPassword = "";
 		String dbName = "";
-		
+
 		Scanner sc = new Scanner(System.in);
 		System.out.println("Initializing ParkBase Database...");
 		System.out.print("Identify your local database: ");
@@ -29,11 +29,11 @@ public class Initializer {
 		dbUsername = sc.nextLine();
 		System.out.print("Password: ");
 		dbPassword = sc.nextLine();
-		
+
 		try (Connection con = DriverManager.getConnection(url, dbUsername, dbPassword);) {
 			System.out.println("Connection established...");
 			ScriptRunner sr = new ScriptRunner(con);
-			Reader bf = new BufferedReader(new FileReader("../deliverables/deliverable_2.sql"));
+			Reader bf = new BufferedReader(new FileReader("deliverables/deliverable_2.sql"));
 			sr.runScript(bf);
 		} catch (SQLException ex) {
 			Logger lgr = Logger.getLogger(Initializer.class.getName());
@@ -42,7 +42,7 @@ public class Initializer {
 			System.out.println("Error: could not find file.");
 			ex.printStackTrace();
 		}
-		
+
 		sc.close();
 	}
 
