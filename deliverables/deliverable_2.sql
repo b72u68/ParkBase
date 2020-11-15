@@ -74,8 +74,7 @@ create table parking.employee (
     name varchar(30) not null,
     password varchar(20) not null,
     salary numeric(8,2),
-    type varchar(10) not null ,
-    --check (type in ("staff", "admin")),
+    type varchar(10) not null check (type in ('admin', 'staff')),
     primary key (employee_id)
 );
 

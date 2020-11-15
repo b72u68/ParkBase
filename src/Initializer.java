@@ -34,7 +34,13 @@ public class Initializer {
 			System.out.println("Connection established...");
 			ScriptRunner sr = new ScriptRunner(con);
 			Reader bf = new BufferedReader(new FileReader("deliverables/deliverable_2.sql"));
+
 			sr.runScript(bf);
+
+            MockData data = new MockData(con);
+            System.out.println("Insert mock data...");
+            data.insertAllData();
+
 		} catch (SQLException ex) {
 			Logger lgr = Logger.getLogger(Initializer.class.getName());
 			lgr.log(Level.SEVERE, ex.getMessage(), ex);
@@ -45,5 +51,4 @@ public class Initializer {
 
 		sc.close();
 	}
-
 }
