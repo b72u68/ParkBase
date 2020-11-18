@@ -2,6 +2,7 @@
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -74,6 +75,7 @@ public class Initializer extends JFrame {
 		add(btnExit);
 		add(lblStatus);   // 5th row
 
+
 		btnSubm.addActionListener(new ActionListener() {
 			@SuppressWarnings("deprecation")
 			public void actionPerformed(ActionEvent e) {
@@ -91,6 +93,9 @@ public class Initializer extends JFrame {
 
 					sr.runScript(bf);
 		            insertMockData(con);
+		            
+		            UserMenu userMenu = new UserMenu(con, "7463462");
+		            userMenu.requestUpdate();
 
 				} catch (SQLException ex) {
 					Logger lgr = Logger.getLogger(Initializer.class.getName());

@@ -7,10 +7,10 @@ create schema if not exists parking;
 
 /* For debugging relation: To drop table, remove '--' and run the command */
 
-revoke all privileges on parking.reservation from r_user, staff, admin;
-revoke all privileges on parking.update_form from r_user, staff, admin;
+revoke all privileges on parking.reservation from r_user, member, staff, admin;
+revoke all privileges on parking.update_form from r_user, member, staff, admin;
 revoke all privileges on parking.member from admin;
-revoke all privileges on parking.temporary_license_plate from admin;
+revoke all privileges on parking.temporary_license_plate from member, admin;
 revoke all privileges on parking.user from admin;
 
 revoke all privileges on parking.member_pay from admin;
@@ -22,6 +22,7 @@ drop view if exists parking.lot_ratios;
 drop view if exists parking.times;
 
 drop role if exists r_user;
+drop role if exists member;
 drop role if exists staff;
 drop role if exists admin;
 
@@ -168,14 +169,20 @@ create view parking.times as select user_id, login_time, logout_time from parkin
 /* end report views */
 
 create role r_user;
+create role member;
 create role staff;
 create role admin;
 
 /*
     allow everyone to create an update_form and a reservation or view the bookings
 */
-grant insert on parking.update_form, parking.reservation to r_user, staff, admin;
-grant select on parking.booking to r_user, staff, admin;
+grant insert on parking.update_form, parking.reservation to r_user, member, staff, admin;
+grant select on parking.booking to r_user, member, staff, admin;
+
+/*
+    allow member to create temporary_license_plate
+*/
+grant insert on parking.temporary_license_plate to member;
 
 /*
     allow staff members to view, delete, and update update_forms in addition to
