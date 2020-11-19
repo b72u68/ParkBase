@@ -9,6 +9,7 @@ create schema if not exists parking;
 
 revoke all privileges on parking.reservation from r_user, member, staff, admin;
 revoke all privileges on parking.update_form from r_user, member, staff, admin;
+revoke all privileges on parking.booking from r_user, member, staff, admin;
 revoke all privileges on parking.member from admin;
 revoke all privileges on parking.temporary_license_plate from member, admin;
 revoke all privileges on parking.user from admin;
@@ -20,6 +21,11 @@ drop view if exists parking.mem_pay;
 drop view if exists parking.guest_pay;
 drop view if exists parking.lot_ratios;
 drop view if exists parking.times;
+
+drop owned by r_user;
+drop owned by member;
+drop owned by staff;
+drop owned by admin;
 
 drop role if exists r_user;
 drop role if exists member;
