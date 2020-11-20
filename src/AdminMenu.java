@@ -94,6 +94,7 @@ public class AdminMenu extends JFrame {
 		btnLo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				setVisible(false);
+				dispose();
 				//call login jframe
 			}
 		});

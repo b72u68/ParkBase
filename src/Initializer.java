@@ -85,7 +85,6 @@ public class Initializer extends JFrame {
 				String dbName = txtDatabase.getText();
 				url.concat(dbName);
 				System.out.println("Initializing ParkBase Database...");
-				
 				try (Connection con = DriverManager.getConnection(url, dbUsername, dbPassword);) {
 					System.out.println("Connection established...");
 					ScriptRunner sr = new ScriptRunner(con);
@@ -93,9 +92,16 @@ public class Initializer extends JFrame {
 
 					sr.runScript(bf);
 		            insertMockData(con);
+		            setVisible(false);
+		            dispose();
+		            new Login(con); //connection is dropping somewhere in insertMockData
+		            				//Login can run with this connection -> DriverManager.getConnection(url, dbUsername, dbPassword));
+		            				//but the database will not be updated
 		            
-		            UserMenu userMenu = new UserMenu(con, "7463462");
-		            userMenu.requestUpdate();
+		            //to test UserMenu, uncomment the following two statements and comment out "new Login(con);" above
+		            
+		            //UserMenu userMenu = new UserMenu(con, "7463462");
+		            //userMenu.requestUpdate();
 
 				} catch (SQLException ex) {
 					Logger lgr = Logger.getLogger(Initializer.class.getName());
@@ -123,4 +129,6 @@ public class Initializer extends JFrame {
         System.out.println("Inserting mock data...");
         data.insertAllData();
     }
+    
+    
 }
