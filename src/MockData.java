@@ -220,6 +220,41 @@ public class MockData {
 			e.printStackTrace();
 		}
 	}
+	
+	public void insertAdminData () {
+        File adminFile = new File("data/admin.csv");
+		try {
+			Scanner adminData = new Scanner(adminFile);
+            adminData.nextLine();
+
+            while (adminData.hasNextLine()) {
+                PreparedStatement pStmt = connection.prepareStatement("insert into parking.admin (admin_id, name, password) values (?,?,?)");
+
+                String data = adminData.nextLine();
+                String[] dataList = data.split(",");
+
+                String adminID = dataList[0];
+                String name = dataList[1];
+                String password = dataList[2];
+
+                pStmt.setString(1, adminID);
+                pStmt.setString(2, name);
+                pStmt.setString(3, password);
+
+                pStmt.executeUpdate();
+            }
+
+            System.out.println("Insert employee data successfully!");
+            adminData.close();
+
+        } catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(Initializer.class.getName());
+			lgr.log(Level.SEVERE, ex.getMessage(), ex);
+        } catch (FileNotFoundException e) {
+			System.out.println("Error: could not find file.");
+			e.printStackTrace();
+		}
+	}
 
 	public void insertTemporaryPlateData () {
         DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS");
@@ -358,6 +393,7 @@ public class MockData {
         insertUserData();
         insertMemberData();
         insertEmployeeData();
+        insertAdminData();
         insertTemporaryPlateData();
         insertUpdateFormData();
         insertReservationData();

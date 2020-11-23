@@ -2,6 +2,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,8 +16,14 @@ import javax.swing.SwingConstants;
 
 
 public class Login extends JFrame{
+	protected  String url;
+	private String dbName;
+	private String dbUsername;
+	private String dbPassword;
+	protected Connection connection;
 	
-	public Login(Connection connection) {
+	public Login(String dbName, String dbUsername, String dbPassword) {
+	//public Login(Connection connection) {
     	
     	super("Login");
 		
@@ -24,6 +31,7 @@ public class Login extends JFrame{
 		setLayout(new GridLayout(5, 2));
 		setLocationRelativeTo(null);
 		
+		setConnection(dbName, dbUsername, dbPassword);
 		// labels
 		JLabel lblUsername = new JLabel("Username", SwingConstants.LEFT);
 		JLabel lblPassword = new JLabel("Password", SwingConstants.LEFT);
@@ -52,14 +60,14 @@ public class Login extends JFrame{
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String query = "SELECT * FROM parking.user WHERE parking.user.user_id = ? AND parking.user.password = ?;";
-				try (PreparedStatement stmt = connection.prepareStatement(query)) {
+				try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
 					stmt.setString(1, txtUname.getText());
 					stmt.setString(2, txtPassword.getText());
 					ResultSet rs = stmt.executeQuery();
 					if (rs.next()) {
 						setVisible(false); // HIDE THE FRAME
 						dispose(); // CLOSE OUT THE WINDOW
-						UserMenu userMenu = new UserMenu(connection, "7463462");
+						UserMenu userMenu = new UserMenu(getConnection(), "7463462");
 			            userMenu.requestUpdate();
 					} else
 						lblStatus.setText("User not found");
@@ -67,7 +75,7 @@ public class Login extends JFrame{
 					ex.printStackTrace();
 				}
 				query = "SELECT * FROM parking.employee WHERE parking.employee.employee_id = ? AND parking.employee.password = ?;";
-				try (PreparedStatement stmt = connection.prepareStatement(query)) {
+				try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
 					stmt.setString(1, txtUname.getText());
 					stmt.setString(2, txtPassword.getText());
 					ResultSet rs = stmt.executeQuery();
@@ -81,14 +89,14 @@ public class Login extends JFrame{
 					ex.printStackTrace();
 				}
 				query = "SELECT * FROM parking.admin WHERE parking.admin.admin_id = ? AND parking.admin.password = ?;";
-				try (PreparedStatement stmt = connection.prepareStatement(query)) {
+				try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
 					stmt.setString(1, txtUname.getText());
 					stmt.setString(2, txtPassword.getText());
 					ResultSet rs = stmt.executeQuery();
 					if (rs.next()) {
 						setVisible(false); // HIDE THE FRAME
 						dispose(); // CLOSE OUT THE WINDOW
-						//Admin Menu
+						AdminMenu aMenu = new AdminMenu(getdbName(), getdbUsername(), getdbPassword());
 					} else
 						lblStatus.setText("Admin not found");
 				} catch (SQLException ex) {
@@ -101,4 +109,32 @@ public class Login extends JFrame{
 
 		setVisible(true); // SHOW THE FRAME
     }
+	
+	private void setConnection(String dbName, String dbUsername, String dbPassword) {
+		this.dbName = dbName;
+		this.dbUsername = dbUsername;
+		this.dbPassword = dbPassword;
+	}
+	
+	private Connection getConnection() {
+		try {
+			url = "jdbc:postgresql://localhost:5432/";
+			url.concat(this.dbName);
+			connection = DriverManager.getConnection(url, this.dbUsername, this.dbPassword);
+		} catch (SQLException ex) {
+			System.out.println("Error: could not set connection");
+			ex.printStackTrace();
+		}
+		return connection;
+	}
+	
+	public String getdbName() {
+		return this.dbName;
+	}
+	public String getdbUsername() {
+		return this.dbUsername;
+	}
+	public String getdbPassword() {
+		return this.dbPassword;
+	}
 }

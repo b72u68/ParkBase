@@ -36,6 +36,7 @@ drop table if exists parking.parking_lot cascade;
 drop table if exists parking.spot cascade;
 drop table if exists parking.reservation;
 drop table if exists parking.temporary_license_plate;
+drop table if exists parking.admin;
 drop table if exists parking.employee cascade;
 drop table if exists parking.update_form;
 drop table if exists parking.member cascade;
@@ -83,6 +84,12 @@ create table parking.employee (
     salary numeric(8,2),
     type varchar(10) not null check (type in ('admin', 'staff')),
     primary key (employee_id)
+);
+
+create table parking.admin (
+	admin_id char(7) not null,
+	name varchar(30) not null,
+	password varchar(20) not null
 );
 
 /* TODO: Add remain_time() attribute */

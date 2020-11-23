@@ -2,6 +2,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,14 +16,22 @@ import javax.swing.JTable;
 
 
 public class AdminMenu extends JFrame {
+	protected  String url;
+	private String dbName;
+	private String dbUsername;
+	private String dbPassword;
+	protected Connection connection;
 	
-	public AdminMenu(Connection con) {
+	public AdminMenu(String dbName, String dbUsername, String dbPassword) {
+	//public AdminMenu(Connection con) {
+		
 		super("Admin Menu");
 		
 		setSize(450, 270);
 		setLayout(new GridLayout(5, 2));
 		setLocationRelativeTo(null);
 		
+		setConnection(dbName, dbUsername, dbPassword);
 		//buttons
 		JButton btnPr = new JButton("View Profile");
 		JButton btnMR = new JButton("Make Reservation");
@@ -45,7 +54,7 @@ public class AdminMenu extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					String userID = JOptionPane.showInputDialog(null, "Enter user ID");
-					PreparedStatement pst = con.prepareStatement("SELECT * FROM (parking.user LEFT JOIN parking.member) WHERE user_id = ?;");
+					PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM (parking.user LEFT JOIN parking.member) WHERE parking.user_id = ?;");
 					pst.setString(1, userID);
 					ResultSet profile = pst.executeQuery();
 					
@@ -81,7 +90,7 @@ public class AdminMenu extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					Statement stm = con.createStatement();
+					Statement stm = getConnection().createStatement();
 					ResultSet spots = stm.executeQuery("SELECT * FROM parking.spot WHERE distinct (spot_id, lot_id, reservation_time_in, reservation_time_out) NOT IN (SELECT distinct (spot_id, lot_id, reservation_time_in, reservation_time_out) FROM parking.reservation;");
 					ResultSet member_pay = stm.executeQuery("SELECT * FROM parking.member_pay;");
 					ResultSet guest_pay = stm.executeQuery("SELECT * FROM parking.guest_pay;");
@@ -98,7 +107,7 @@ public class AdminMenu extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				setVisible(false);
 				dispose();
-				//call login jframe
+				new Login(getdbName(), getdbUsername(), getdbPassword());
 			}
 		});
 		
@@ -108,6 +117,34 @@ public class AdminMenu extends JFrame {
 	public static void main(String[] args) {
 		
 		//new AdminMenu();
+	}
+	
+	private void setConnection(String dbName, String dbUsername, String dbPassword) {
+		this.dbName = dbName;
+		this.dbUsername = dbUsername;
+		this.dbPassword = dbPassword;
+	}
+	
+	private Connection getConnection() {
+		try {
+			url = "jdbc:postgresql://localhost:5432/";
+			url.concat(this.dbName);
+			connection = DriverManager.getConnection(url, this.dbUsername, this.dbPassword);
+		} catch (SQLException ex) {
+			System.out.println("Error: could not set connection");
+			ex.printStackTrace();
+		}
+		return connection;
+	}
+	
+	public String getdbName() {
+		return this.dbName;
+	}
+	public String getdbUsername() {
+		return this.dbUsername;
+	}
+	public String getdbPassword() {
+		return this.dbPassword;
 	}
 
 }
