@@ -10,9 +10,6 @@ import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-//import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import javax.swing.JButton;
@@ -20,38 +17,30 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
-
-import org.apache.ibatis.jdbc.ScriptRunner;
+import javax.swing.SwingConstants;
 
 @SuppressWarnings("serial")
 public class Initializer extends JFrame {
-
+	protected String url = "jdbc:postgresql://localhost:5432/";
+	protected String dbName;
+	protected String dbUsername;
+	protected String dbPassword;
+	
+	private Connection connection;
+	
 	public Initializer() {
 		
 		super("PostgreSQL Connection Manager");
-		
-		
-		/*Scanner sc = new Scanner(System.in);
-		
-		System.out.print("Identify your local database: ");
-		dbName = sc.nextLine();
-		url.concat(dbName);
-		System.out.print("Username: ");
-		dbUsername = sc.nextLine();
-		System.out.print("Password: ");
-		dbPassword = sc.nextLine();*/
-
-		
 		
 		setSize(450, 270);
 		setLayout(new GridLayout(5, 2));
 		setLocationRelativeTo(null);
 		
 		// labels
-		JLabel lblDatabase = new JLabel("Database", JLabel.LEFT);
-		JLabel lblUsername = new JLabel("Username", JLabel.LEFT);
-		JLabel lblPassword = new JLabel("Password", JLabel.LEFT);
-		JLabel lblStatus = new JLabel(" ", JLabel.CENTER);
+		JLabel lblDatabase = new JLabel("Database", SwingConstants.LEFT);
+		JLabel lblUsername = new JLabel("Username", SwingConstants.LEFT);
+		JLabel lblPassword = new JLabel("Password", SwingConstants.LEFT);
+		JLabel lblStatus = new JLabel(" ", SwingConstants.CENTER);
 		
 		JTextField txtDatabase = new JTextField();
 		JTextField txtUname = new JTextField(10);
@@ -60,9 +49,9 @@ public class Initializer extends JFrame {
 		JButton btnExit = new JButton("Exit");
 
 		// constraints
-		lblDatabase.setHorizontalAlignment(JLabel.CENTER);
-		lblUsername.setHorizontalAlignment(JLabel.CENTER);
-		lblPassword.setHorizontalAlignment(JLabel.CENTER);
+		lblDatabase.setHorizontalAlignment(SwingConstants.CENTER);
+		lblUsername.setHorizontalAlignment(SwingConstants.CENTER);
+		lblPassword.setHorizontalAlignment(SwingConstants.CENTER);
 		 
 		// add objects to frame
 		add(lblDatabase);	//1st row
@@ -77,41 +66,56 @@ public class Initializer extends JFrame {
 
 
 		btnSubm.addActionListener(new ActionListener() {
+			private String dbName;
+			private String dbUsername;
+			private String dbPassword;
+
+			@Override
 			@SuppressWarnings("deprecation")
 			public void actionPerformed(ActionEvent e) {
-				String url = "jdbc:postgresql://localhost:5432/";
-				String dbUsername = txtUname.getText();
-				String dbPassword = txtPassword.getText();
-				String dbName = txtDatabase.getText();
-				url.concat(dbName);
+				
+				
+				this.setConnection(txtDatabase.getText(), txtUname.getText(), txtPassword.getText());
 				System.out.println("Initializing ParkBase Database...");
-				try (Connection con = DriverManager.getConnection(url, dbUsername, dbPassword);) {
+				try {
 					System.out.println("Connection established...");
-					ScriptRunner sr = new ScriptRunner(con);
+					ScriptRunner sr = new ScriptRunner(getConnection());
 					Reader bf = new BufferedReader(new FileReader("deliverables/deliverable_2.sql"));
 
 					sr.runScript(bf);
-		            insertMockData(con);
+		            insertMockData(getConnection());
 		            setVisible(false);
 		            dispose();
-		            new Login(con); //connection is dropping somewhere in insertMockData
-		            				//Login can run with this connection -> DriverManager.getConnection(url, dbUsername, dbPassword));
-		            				//but the database will not be updated
+		            new Login(getConnection());
 		            
 		            //to test UserMenu, uncomment the following two statements and comment out "new Login(con);" above
 		            
 		            //UserMenu userMenu = new UserMenu(con, "7463462");
 		            //userMenu.requestUpdate();
 
-				} catch (SQLException ex) {
-					Logger lgr = Logger.getLogger(Initializer.class.getName());
-					lgr.log(Level.SEVERE, ex.getMessage(), ex);
 				} catch (FileNotFoundException ex) {
 					System.out.println("Error: could not find file.");
 					ex.printStackTrace();
 				}
 
-				//sc.close();
+			}
+
+			private void setConnection(String dbName, String dbUsername, String dbPassword) {
+				this.dbName = dbName;
+				this.dbUsername = dbUsername;
+				this.dbPassword = dbPassword;
+			}
+			
+			private Connection getConnection() {
+				try {
+					url = "jdbc:postgresql://localhost:5432/";
+					url.concat(this.dbName);
+					connection = DriverManager.getConnection(url, this.dbUsername, this.dbPassword);
+				} catch (SQLException ex) {
+					System.out.println("Error: could not set connection");
+					ex.printStackTrace();
+				}
+				return connection;
 			}
 		});
 		btnExit.addActionListener(e -> System.exit(0));

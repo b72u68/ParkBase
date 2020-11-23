@@ -9,12 +9,9 @@ import java.sql.Statement;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 
 
 public class AdminMenu extends JFrame {
@@ -44,6 +41,7 @@ public class AdminMenu extends JFrame {
 
 
 		btnPr.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
 					String userID = JOptionPane.showInputDialog(null, "Enter user ID");
@@ -62,21 +60,25 @@ public class AdminMenu extends JFrame {
 			}
 		});
 		btnMR.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				
 			}
 		});
 		btnAR.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				
 			}
 		});
 		btnUp.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				//new ProfileUpdateMenu();
 			}
 		});
 		btnRp.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
 					Statement stm = con.createStatement();
@@ -92,6 +94,7 @@ public class AdminMenu extends JFrame {
 			}
 		});
 		btnLo.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				setVisible(false);
 				dispose();
