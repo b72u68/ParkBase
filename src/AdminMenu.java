@@ -53,16 +53,34 @@ public class AdminMenu extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
+					JFrame f = new JFrame();
+					f.setSize(400,200);
 					String userID = JOptionPane.showInputDialog(null, "Enter user ID");
-					PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM (parking.user LEFT JOIN parking.member) WHERE parking.user_id = ?;");
+					PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?;",
+							ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 					pst.setString(1, userID);
 					ResultSet profile = pst.executeQuery();
+					
+					if (!profile.next()) {
+						pst = getConnection().prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?;",
+								ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						pst.setString(1, userID);
+						profile = pst.executeQuery();
+					}
+					profile.previous();
+					if (!profile.next()) {
+						pst = getConnection().prepareStatement("SELECT * FROM parking.admin WHERE parking.admin.admin_id = ?;",
+								ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						pst.setString(1, userID);
+						profile = pst.executeQuery();
+					}
+					profile.previous();
 					
 					JTable jt = new JTable(profileJTable.buildTableModel(profile));
 					jt.setBounds(30, 40, 200, 400);
 					JScrollPane sp = new JScrollPane(jt);
-					add(sp);
-					setVisible(true);
+					f.add(sp);
+					f.setVisible(true);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
