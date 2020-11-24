@@ -151,23 +151,23 @@ create view parking.booking as
 	
 -- figure out how to include reservation_time_in, reservation_time_out by month
 create view parking.member_pay as
-	select lot_id, mem_count*membership_fee, 				
+	select lot_id, start_month, end_month, mem_count*membership_fee as mem_profit		
 	from (
 		select *
 		from (
-			select lot_id, count(distinct (user_id, time_created)) as mem_count
-			from parking.reservation where application_type = 'member' group by lot_id
+			select lot_id, date_part('month', reservation_time_in) as start_month, date_part('month', reservation_time_out) as end_month, count(distinct (user_id, time_created)) as mem_count
+			from parking.reservation where application_type = 'member' group by lot_id, date_part('month', reservation_time_in), date_part('month', reservation_time_out)
 		) as foo natural join parking.parking_lot
 	) as bar;
 
 --figure out how to include reservation_time_in, reservation_time_out by month
 create view parking.guest_pay as
-	select lot_id, guest_count*guest_fee, 			
+	select lot_id, start_month, end_month, guest_count*guest_fee			
 	from (
 		select *
 		from (
-			select lot_id, count(distinct (user_id, time_created)) as guest_count
-			from parking.reservation where application_type != 'member' group by lot_id
+			select lot_id, date_part('month', reservation_time_in) as start_month, date_part('month', reservation_time_out) as end_month, count(distinct (user_id, time_created)) as guest_count
+			from parking.reservation where application_type != 'member' group by lot_id, date_part('month', reservation_time_in), date_part('month', reservation_time_out)
 		) as foo natural join parking.parking_lot
 	) as bar;
 
