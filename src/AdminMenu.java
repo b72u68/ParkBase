@@ -1,3 +1,5 @@
+import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -5,14 +7,19 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 
 public class AdminMenu extends JFrame {
@@ -101,7 +108,89 @@ public class AdminMenu extends JFrame {
 		btnUp.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				//new ProfileUpdateMenu();
+				try {
+					Statement stm = getConnection().createStatement();
+					ResultSet updates = stm.executeQuery("SELECT * FROM parking.update_form");
+
+					JFrame subf = new JFrame();
+					Container contentPane = subf.getContentPane();
+					contentPane.setLayout(new BorderLayout());
+					JTable jt = new JTable(pUpdateJTable.buildTableModel(updates));
+					//jt.setBounds(30, 40, 200, 400);
+					JScrollPane sp = new JScrollPane(jt);
+					contentPane.add(sp, BorderLayout.CENTER);
+					subf.setSize(500, 400);
+					
+					JButton btnU = new JButton("Update");		
+					JButton btnC = new JButton("Close Update Request");
+					contentPane.add(btnU, BorderLayout.SOUTH);
+					contentPane.add(btnC, BorderLayout.SOUTH);
+					
+					btnU.addActionListener(new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							try {
+								JFrame UpFrame = new JFrame();
+								UpFrame.setSize(400,200);
+								String userID = JOptionPane.showInputDialog(null, "Enter user ID");
+								PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?;",
+									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+								pst.setString(1, userID);
+								ResultSet profile = pst.executeQuery();
+								
+								if (profile.next()) {
+									update_confirmation_form(UpFrame, "user", userID);
+								} else {
+									pst = getConnection().prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?;",
+											ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+									pst.setString(1, userID);
+									profile = pst.executeQuery();
+									if (profile.next()) {
+										profile.previous();
+										update_confirmation_form(UpFrame, "user", userID);
+									} else {
+										pst = getConnection().prepareStatement("SELECT * FROM parking.admin WHERE parking.admin.admin_id = ?;",
+												ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+										pst.setString(1, userID);
+										profile = pst.executeQuery();
+										if (profile.next()) {
+											profile.previous();
+											update_confirmation_form(UpFrame, "user", userID);
+										}
+									}
+								}
+								UpFrame.setVisible(true);
+							} catch (SQLException ex) {
+								System.out.println("Error: could not update profile.");
+								ex.printStackTrace();
+							}			
+						} 
+					}); 
+					btnC.addActionListener(new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							try {
+								String userID = JOptionPane.showInputDialog(null, "Enter user ID");
+								PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM parking.update_form WHERE parking.update_form.user_id = ?;",
+									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+								pst.setString(1, userID);
+								ResultSet profile = pst.executeQuery();
+								
+								if (profile.next()) {
+									pst = getConnection().prepareStatement("DELETE FROM parking.update_form WHERE parking.update_form.user_id = ?;");
+									pst.setString(1, userID);
+									pst.executeUpdate();
+									System.out.println("Update requests from user \"" + userID + "\" closed.");
+								}
+							} catch (SQLException ex) {
+								System.out.println("Error: Could not close form");
+								ex.printStackTrace();
+							}
+						}
+					});
+					subf.setVisible(true);
+				} catch (SQLException ex) {
+					System.out.println("Could not retrieve update_forms");
+					ex.printStackTrace();
+				}
 			}
 		});
 		btnRp.addActionListener(new ActionListener() {
@@ -132,11 +221,6 @@ public class AdminMenu extends JFrame {
 		setVisible(true);
 	}
 	
-	public static void main(String[] args) {
-		
-		//new AdminMenu();
-	}
-	
 	private void setConnection(String dbName, String dbUsername, String dbPassword) {
 		this.dbName = dbName;
 		this.dbUsername = dbUsername;
@@ -163,6 +247,65 @@ public class AdminMenu extends JFrame {
 	}
 	public String getdbPassword() {
 		return this.dbPassword;
+	}
+	
+	public void update_confirmation_form(JFrame frame, String table, String userID) {
+		
+		String sqlTable = "parking." + table;
+		String sqlCol = sqlTable + "." + table + "_id";
+		
+		frame.setSize(450, 270);
+		frame.setLayout(new GridLayout(5, 2));
+		
+		JLabel lblField = new JLabel("Enter field to change", SwingConstants.LEFT);
+		JLabel lblValue = new JLabel("Enter value for field", SwingConstants.LEFT);
+		JLabel lblStatus = new JLabel(" ", SwingConstants.CENTER);
+
+		JTextField txtField = new JTextField();
+		JTextField txtValue = new JTextField();
+		JButton btnSubm = new JButton("Submit");
+		JButton btnExit = new JButton("Exit");
+
+		// constraints
+		lblField.setHorizontalAlignment(SwingConstants.CENTER);
+		lblValue.setHorizontalAlignment(SwingConstants.CENTER);
+		 
+		// add objects to frame
+		frame.add(lblField);  
+		frame.add(txtField);
+		frame.add(lblValue);
+		frame.add(txtValue);
+		frame.add(btnSubm);
+		frame.add(btnExit);
+		
+		btnSubm.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					PreparedStatement pst = getConnection().prepareStatement("UPDATE " + sqlTable + " SET name = ? WHERE " + sqlCol + " = ?;",
+							ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+				
+				//TODO these prepared update statements fail because the user cannot specify column name.
+				//Working on making the update form more user friendly
+					String field = sqlTable + "." + txtField.getText();
+					//pst.setString(1, txtField.getText());
+					pst.setString(1, txtValue.getText());
+					pst.setString(2, userID);
+					pst.executeUpdate();
+					pst.close();
+					System.out.println("Update Successful!");
+					frame.setVisible(false);
+					frame.dispose();
+				} catch (SQLException ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
+		btnExit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				frame.setVisible(false);
+				frame.dispose();
+			}
+		});
 	}
 
 }
