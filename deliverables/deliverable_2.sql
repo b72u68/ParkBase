@@ -137,21 +137,8 @@ create view parking.booking as
 --    the following 4 tables are for running a report
 --   member_pay and guest_pay will be combined to check the total revenue
 
-
---create view parking.member_pay as
---	select lot_id, mem_count*membership_fee
---	from (
---		select *
---		from (
---			select lot_id, count(user_id) as mem_count
---			from parking.member group by lot_id
---		) as foo natural join parking.parking_lot
---	) as bar;
-
-	
--- figure out how to include reservation_time_in, reservation_time_out by month
 create view parking.member_pay as
-	select lot_id, start_month, end_month, mem_count*membership_fee as mem_profit		
+	select lot_id, start_month, end_month, mem_count*membership_fee-upkeep_cost as mem_profit		
 	from (
 		select *
 		from (
@@ -160,9 +147,8 @@ create view parking.member_pay as
 		) as foo natural join parking.parking_lot
 	) as bar;
 
---figure out how to include reservation_time_in, reservation_time_out by month
 create view parking.guest_pay as
-	select lot_id, start_month, end_month, guest_count*guest_fee			
+	select lot_id, start_month, end_month, guest_count*guest_fee-upkeep_cost as guest_profit			
 	from (
 		select *
 		from (
@@ -186,14 +172,14 @@ create view parking.lot_ratios as (
 	),
 	total_drive_in (lot_id, num_dv) as (
 		select lot_id, count(distinct(user_id, time_created))
-		from parking.reservation where application_type = 'drive-in' group by lot_id
+		from parking.reservation where application_type = 'drive in' group by lot_id
 	)
-	select lot_id, num_mem/num_spot as ratio_mem, num_onl/num_spot as ratio_onl, num_dv/num_spot as ratio_dv
+	select lot_id, num_mem, num_onl, num_dv, num_spot
 	from total_lot_spots natural join total_members natural join total_online natural join total_drive_in
 );
 
 create view parking.times as select user_id, login_time, logout_time from parking.user;
-/* end report views */
+--end report views 
 
 create role r_user;
 create role member;

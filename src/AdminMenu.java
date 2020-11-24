@@ -216,6 +216,43 @@ public class AdminMenu extends JFrame {
 					ResultSet guest_pay = stm.executeQuery("SELECT * FROM parking.guest_pay;");
 					ResultSet lot_ratios = stm.executeQuery("SELECT * FROM parking.lot_ratios;");
 					ResultSet times = stm.executeQuery("SELECT * FROM parking.times;");
+					
+					System.out.println("Member pay: ");
+					ResultSetMetaData metaData = member_pay.getMetaData();
+					int numCol = metaData.getColumnCount();
+					while(member_pay.next()) {
+						for (int i=1; i<=numCol; i++) {
+							System.out.print(member_pay.getObject(i) + ", ");
+						}
+						System.out.print("\n");
+					}
+					System.out.println("Guest pay: ");
+					metaData = guest_pay.getMetaData();
+					numCol = metaData.getColumnCount();
+					while(guest_pay.next()) {
+						for (int i=1; i<=numCol; i++) {
+							System.out.print(guest_pay.getObject(i) + ", ");
+						}
+						System.out.print("\n");
+					}
+					System.out.println("Lot ratios: ");
+					metaData = lot_ratios.getMetaData();
+					numCol = metaData.getColumnCount();
+					while(lot_ratios.next()) {
+						for (int i=1; i<=numCol; i++) {
+							System.out.print(lot_ratios.getObject(i) + ", ");
+						}
+						System.out.print("\n");
+					}
+					System.out.println("Times: ");
+					metaData = times.getMetaData();
+					numCol = metaData.getColumnCount();
+					while(times.next()) {
+						for (int i=1; i<=numCol; i++) {
+							System.out.print(times.getObject(i) + ", ");
+						}
+						System.out.print("\n");
+					}
 				} catch (SQLException ex) {
 					ex.printStackTrace();
 				}

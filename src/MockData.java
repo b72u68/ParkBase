@@ -46,8 +46,6 @@ public class MockData {
                 String userID = dataList[0];
                 String name = dataList[1];
                 String password = dataList[2];
-                System.out.println(userID);
-                System.out.println(password);
                 Timestamp loginTime = new Timestamp(format.parse(dataList[3]).getTime());
                 Timestamp logoutTime = new Timestamp(format.parse(dataList[4]).getTime());
 
