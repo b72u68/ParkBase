@@ -148,8 +148,10 @@ create view parking.booking as
 --		) as foo natural join parking.parking_lot
 --	) as bar;
 
+	
+-- figure out how to include reservation_time_in, reservation_time_out by month
 create view parking.member_pay as
-	select lot_id, mem_count*membership_fee, 				-- figure out how to include reservation_time_in, reservation_time_out by month
+	select lot_id, mem_count*membership_fee, 				
 	from (
 		select *
 		from (
@@ -158,9 +160,9 @@ create view parking.member_pay as
 		) as foo natural join parking.parking_lot
 	) as bar;
 
-
+--figure out how to include reservation_time_in, reservation_time_out by month
 create view parking.guest_pay as
-	select lot_id, guest_count*guest_fee, 			--figure out how to include reservation_time_in, reservation_time_out by month
+	select lot_id, guest_count*guest_fee, 			
 	from (
 		select *
 		from (

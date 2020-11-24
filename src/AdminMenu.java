@@ -211,7 +211,7 @@ public class AdminMenu extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					Statement stm = getConnection().createStatement();
-					ResultSet spots = stm.executeQuery("SELECT * FROM parking.spot WHERE distinct (spot_id, lot_id, reservation_time_in, reservation_time_out) NOT IN (SELECT distinct (spot_id, lot_id, reservation_time_in, reservation_time_out) FROM parking.reservation;");
+					//ResultSet spots = stm.executeQuery("SELECT distinct (spot_id, lot_id, reservation_time_in, reservation_time_out) FROM parking.spot NATURAL JOIN parking.reservation;");// WHERE (spot_id, lot_id, reservation_time_in, reservation_time_out) NOT IN (SELECT distinct (spot_id, lot_id, reservation_time_in, reservation_time_out) FROM parking.reservation);");
 					ResultSet member_pay = stm.executeQuery("SELECT * FROM parking.member_pay;");
 					ResultSet guest_pay = stm.executeQuery("SELECT * FROM parking.guest_pay;");
 					ResultSet lot_ratios = stm.executeQuery("SELECT * FROM parking.lot_ratios;");

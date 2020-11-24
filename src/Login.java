@@ -107,6 +107,8 @@ public class Login extends JFrame{
 		
 		btnExit.addActionListener(e -> System.exit(0));
 
+		getRootPane().setDefaultButton(btnSubm);
+		
 		setVisible(true); // SHOW THE FRAME
     }
 	

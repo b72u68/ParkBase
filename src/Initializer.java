@@ -119,6 +119,8 @@ public class Initializer extends JFrame {
 			}
 		});
 		btnExit.addActionListener(e -> System.exit(0));
+		
+		getRootPane().setDefaultButton(btnSubm);
 
 		setVisible(true);
 	}
