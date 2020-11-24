@@ -116,14 +116,13 @@ public class AdminMenu extends JFrame {
 					Container contentPane = subf.getContentPane();
 					contentPane.setLayout(new BorderLayout());
 					JTable jt = new JTable(pUpdateJTable.buildTableModel(updates));
-					//jt.setBounds(30, 40, 200, 400);
 					JScrollPane sp = new JScrollPane(jt);
 					contentPane.add(sp, BorderLayout.CENTER);
 					subf.setSize(500, 400);
 					
 					JButton btnU = new JButton("Update");		
 					JButton btnC = new JButton("Close Update Request");
-					contentPane.add(btnU, BorderLayout.SOUTH);
+					contentPane.add(btnU, BorderLayout.NORTH);
 					contentPane.add(btnC, BorderLayout.SOUTH);
 					
 					btnU.addActionListener(new ActionListener() {
@@ -138,7 +137,15 @@ public class AdminMenu extends JFrame {
 								ResultSet profile = pst.executeQuery();
 								
 								if (profile.next()) {
-									update_confirmation_form(UpFrame, "user", userID);
+									pst = getConnection().prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?;",
+											ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+									pst.setString(1, userID);
+									profile = pst.executeQuery();
+									if (profile.next()) {
+										update_confirmation_form(UpFrame, "member", userID);		//current user is a member
+									} else {
+										update_confirmation_form(UpFrame, "user", userID);			//current user is just a user
+									}
 								} else {
 									pst = getConnection().prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?;",
 											ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
@@ -168,7 +175,7 @@ public class AdminMenu extends JFrame {
 					btnC.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							try {
-								String userID = JOptionPane.showInputDialog(null, "Enter user ID");
+								String userID = JOptionPane.showInputDialog(null, "Delete all update requests from this user ID");
 								PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM parking.update_form WHERE parking.update_form.user_id = ?;",
 									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 								pst.setString(1, userID);
@@ -178,7 +185,7 @@ public class AdminMenu extends JFrame {
 									pst = getConnection().prepareStatement("DELETE FROM parking.update_form WHERE parking.update_form.user_id = ?;");
 									pst.setString(1, userID);
 									pst.executeUpdate();
-									System.out.println("Update requests from user \"" + userID + "\" closed.");
+									System.out.println("All update requests from user \"" + userID + "\" closed.");
 								}
 							} catch (SQLException ex) {
 								System.out.println("Error: Could not close form");
@@ -252,6 +259,9 @@ public class AdminMenu extends JFrame {
 	public void update_confirmation_form(JFrame frame, String table, String userID) {
 		
 		String sqlTable = "parking." + table;
+		if (table.compareTo("member") == 0) {
+			table = "user";
+		}
 		String sqlCol = sqlTable + "." + table + "_id";
 		
 		frame.setSize(450, 270);
@@ -281,14 +291,13 @@ public class AdminMenu extends JFrame {
 		btnSubm.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					PreparedStatement pst = getConnection().prepareStatement("UPDATE " + sqlTable + " SET name = ? WHERE " + sqlCol + " = ?;",
+					PreparedStatement pst = getConnection().prepareStatement("UPDATE " + sqlTable + " SET " + txtField.getText() + " = ? WHERE " + sqlCol + " = ?;",
 							ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-				
-				//TODO these prepared update statements fail because the user cannot specify column name.
-				//Working on making the update form more user friendly
-					String field = sqlTable + "." + txtField.getText();
-					//pst.setString(1, txtField.getText());
-					pst.setString(1, txtValue.getText());
+					if (txtField.getText().compareTo("spot_id") == 0) {
+						pst.setInt(1, Integer.parseInt(txtValue.getText()));
+					} else {
+						pst.setString(1, txtValue.getText());
+					}
 					pst.setString(2, userID);
 					pst.executeUpdate();
 					pst.close();
