@@ -63,11 +63,17 @@ public class AdminMenu extends JFrame {
 					JFrame f = new JFrame();
 					f.setSize(400,200);
 					String userID = JOptionPane.showInputDialog(null, "Enter user ID");
-					PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?;",
+					PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM parking.member NATURAL JOIN parking.user WHERE parking.member.user_id = ?;",
 							ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 					pst.setString(1, userID);
 					ResultSet profile = pst.executeQuery();
-					
+					if (!profile.next()) {
+						pst = getConnection().prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?;",
+								ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						pst.setString(1, userID);
+						profile = pst.executeQuery();
+					}
+					profile.previous();
 					if (!profile.next()) {
 						pst = getConnection().prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?;",
 								ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
