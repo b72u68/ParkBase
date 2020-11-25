@@ -34,7 +34,7 @@ drop role if exists admin;
 
 drop table if exists parking.parking_lot cascade;
 drop table if exists parking.spot cascade;
-drop table if exists parking.reservation;
+drop table if exists parking.reservation cascade;
 drop table if exists parking.temporary_license_plate;
 drop table if exists parking.admin;
 drop table if exists parking.employee cascade;
@@ -134,11 +134,11 @@ create view parking.booking as
 	from parking.reservation;
 
 -- for showing table of available spots on listed days
-create view parking.reserved_days as
-	select date_part('year', reservation_time_in) as start_year, date_part('month', reservation_time_in) as start_month, date_part('day', reservation_time_in) as start_day,
-	date_part('year', reservation_time_out) as end_year, date_part('month', reservation_time_out) as end_month, date_part('day', reservation_time_out) as end_day
-	from parking.reservation;
-
+--create view parking.reserved_days as
+--	select date_part('year', reservation_time_in) as start_year, date_part('month', reservation_time_in) as start_month, date_part('day', reservation_time_in) as start_day,
+--	date_part('year', reservation_time_out) as end_year, date_part('month', reservation_time_out) as end_month, date_part('day', reservation_time_out) as end_day
+--	from parking.reservation;
+--drop view parking.reserved_days;
 --    the following 4 tables are for running a report
 --   member_pay and guest_pay will be combined to check the total revenue
 

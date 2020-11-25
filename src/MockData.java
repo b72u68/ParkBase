@@ -335,7 +335,7 @@ public class MockData {
 	}
 
 	public void insertReservationData () {
-        DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS");
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         File reservationFile = new File("data/reservation.csv");
 		try {
 			Scanner reservationData = new Scanner(reservationFile);
@@ -343,10 +343,8 @@ public class MockData {
 
             while (reservationData.hasNextLine()) {
                 PreparedStatement pStmt = connection.prepareStatement("insert into parking.reservation (user_id, time_created, reservation_time_in, reservation_time_out, license_plate, application_type, employee_id, lot_id, spot_id) values (?,?,?,?,?,?,?,?,?)");
-
                 String data = reservationData.nextLine();
                 String[] dataList = data.split(",");
-
                 String userID = dataList[0];
                 Timestamp timeCreated = new Timestamp(format.parse(dataList[1]).getTime());
                 Timestamp timeIn = new Timestamp(format.parse(dataList[2]).getTime());

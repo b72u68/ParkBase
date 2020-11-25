@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -217,76 +218,65 @@ public class AdminMenu extends JFrame {
 					Statement stm = getConnection().createStatement();
 					
 					//gathers info about available spots
-					ResultSet days = stm.executeQuery("SELECT * FROM parking.reserved_days;");		//selects all days that start or end a reservation
-					ArrayList<double[]> daysArray = new ArrayList<double[]>();
+					ResultSet days = stm.executeQuery("SELECT reservation_time_in, reservation_time_out FROM parking.reservation;");
+					ArrayList<Timestamp[]> timeDaysArray = new ArrayList<Timestamp[]>();
 					while (days.next()) {
-						daysArray.add(new double[] {days.getDouble(1), days.getDouble(2), days.getDouble(3),
-								days.getDouble(4), days.getDouble(5), days.getDouble(6)});
+						timeDaysArray.add(new Timestamp[] {days.getTimestamp(1), days.getTimestamp(2)});
 					}
 					System.out.println("Retrieved all reservation start and end dates.");
-					ArrayList<double[]> completeDaysArray = new ArrayList<double[]>();
-					ArrayList<String> stringDaysArray = new ArrayList<String>();
+					ArrayList<Timestamp> ctDayArray = new ArrayList<Timestamp>();
 					//gets a list of all days between start and end dates
-					for (int i=0; i<daysArray.size(); i++) {
-						completeDaysArray.add(new double[] {daysArray.get(i)[0], daysArray.get(i)[1], daysArray.get(i)[2]});
-						double idate[] = {daysArray.get(i)[0], daysArray.get(i)[1], daysArray.get(i)[2]};
+					for (int i=0; i<timeDaysArray.size(); i++) {
+						Timestamp ts = timeDaysArray.get(i)[0];
 						
-						//caught in infinite loop
-						while (idate[0]<daysArray.get(i)[3] || 
-								idate[0]==daysArray.get(i)[3] && idate[1] < daysArray.get(i)[4] || 
-								idate[0]==daysArray.get(i)[3] && idate[1]==daysArray.get(i)[4] && idate[2] < daysArray.get(i)[5]) {
-							String sdate = (int)idate[0] + "-" + (int)idate[1] + "-" + (int)idate[2];
-							stringDaysArray.add(sdate);
-							SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+						while (ts.compareTo(timeDaysArray.get(i)[1]) < 0) {
 							Calendar c = Calendar.getInstance();
-							try{
-							   //Setting the date to the given date
-							   c.setTime(sdf.parse(sdate));
-							}catch(ParseException pe){
-								System.out.println("Error: Could not parse date");
-								pe.printStackTrace();
-							 }
-							   
-							//Number of Days to add
+	
+							c.setTime(ts);
+							ctDayArray.add((Timestamp)ts.clone());
 							c.add(Calendar.DAY_OF_MONTH, 1);  
-							//Date after adding the days to the given date
-							sdate = sdf.format(c.getTime());
-							//convert date back into double, and add it to the list of days
-							idate[0] = Double.parseDouble(sdate.substring(0,4));
-							idate[1] = Double.parseDouble(sdate.substring(5,7));
-							idate[2] = Double.parseDouble(sdate.substring(8,10));
-							completeDaysArray.add(idate);
+							c.set(Calendar.HOUR_OF_DAY, 0);            // set hour to midnight
+							c.set(Calendar.MINUTE, 0);                 // set minute in hour
+							c.set(Calendar.SECOND, 0);                 // set second in minute
+							c.set(Calendar.MILLISECOND, 0);            // set millis in second
+
+							ts.setTime(c.getTime().getTime());
+							
+
 						}
 					}
 					//get a table of all spots available at each hour
-					//ArrayList<String>[][] open_spots = new ArrayList<String>[completeDaysArray.size()][24];
-					//for (int i=0; i<completeDaysArray.size(); i++) {
-					for (int i=0; i<stringDaysArray.size(); i++) {
-						System.out.print(stringDaysArray.get(i) + "\t");
+					System.out.println("Retrieved all intermediate dates.");
+					for (int i=0; i<ctDayArray.size(); i++) {
+						System.out.println(ctDayArray.get(i) + "\t");
 						for (int hour=0; hour<24; hour++) {
 							try {
 								Statement statement = getConnection().createStatement();
 								//select all the spots that are not in the set of spots with in times before the iterative day and with out times after the iterative day
-								ResultSet freeSpots = statement.executeQuery("SELECT O.lot_id, O.spot_id FROM parking.spot as O"
-										+ "WHERE NOT IN ("
+								ResultSet freeSpots = statement.executeQuery("SELECT lot_id, spot_id FROM parking.spot"
+										+ " WHERE NOT EXISTS ("
 											+ "SELECT C.lot_id, C.spot_id FROM parking.reservation as C"
-											+ "WHERE reservation_time_in <= " + stringDaysArray.get(i)
-											+ " AND reservation _time_out >= " + stringDaysArray.get(i)
-											+ " AND date_part('hour', reservation_time_in) <= " + hour
+											+ " WHERE reservation_time_in <= '" + ctDayArray.get(i)
+											+ "' AND reservation_time_out >= '" + ctDayArray.get(i)
+											+ "' AND date_part('hour', reservation_time_in) <= " + hour
 											+ " AND date_part('hour', reservation_time_out) >= " + hour 
-											+ " AND C.lot_id = O.lot_id"
-											+ " AND C.spot_id = O.spot_id" + ";"
-											);
+											+ " AND C.lot_id = parking.spot.lot_id"
+											+ " AND C.spot_id = parking.spot.spot_id" 
+										+ ");"
+								);
 								while (freeSpots.next()) {
-									//open_spots[i][hour].add(freeSpots.getString(1) + freeSpots.getString(2));
 									System.out.print(freeSpots.getString(1) + freeSpots.getString(2) + "  ");
 								}
+								statement.close();
+								freeSpots.close();
+								connection.close();
 							} catch (SQLException ex) {
 								System.out.println("Error: Could not select spot based on day and hour");
 								ex.printStackTrace();
 							}
-							System.out.print("\n");
+							System.out.print("\t");
 						}
+						System.out.print("\n");
 					}
 					/*JFrame report = new JFrame();
 					JTable spot_calendar = new JTable(open_spots, stringDaysArray);*/
