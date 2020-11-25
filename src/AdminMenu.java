@@ -27,7 +27,7 @@ import javax.swing.SwingConstants;
 
 
 public class AdminMenu extends JFrame {
-	protected  String url;
+	protected String url;
 	private String dbName;
 	private String dbUsername;
 	private String dbPassword;
