@@ -133,6 +133,11 @@ create view parking.booking as
 	select reservation_time_in, reservation_time_out, spot_id, lot_id
 	from parking.reservation;
 
+-- for showing table of available spots on listed days
+create view parking.reserved_days as
+	select date_part('year', reservation_time_in) as start_year, date_part('month', reservation_time_in) as start_month, date_part('day', reservation_time_in) as start_day,
+	date_part('year', reservation_time_out) as end_year, date_part('month', reservation_time_out) as end_month, date_part('day', reservation_time_out) as end_day
+	from parking.reservation;
 
 --    the following 4 tables are for running a report
 --   member_pay and guest_pay will be combined to check the total revenue
