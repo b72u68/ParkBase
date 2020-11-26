@@ -7,6 +7,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -59,6 +61,34 @@ public class UserMenu {
         return true;
     }
 
+    public boolean isDate(String date) {
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        try {
+            format.parse(date);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean isValidLot(String lotId) {
+        if (lotId.length() == 1 && lotAndSpot.keySet().contains(lotId)) {
+             return true;
+        }
+        return false;
+    }
+
+    public boolean isValidSpot(String lotId, String spotId) {
+        if (lotAndSpot.keySet().contains(lotId)) {
+            if (isNumeric(spotId)) {
+                if (lotAndSpot.get(lotId).contains(Integer.parseInt(spotId))) {
+                    return true;
+                } 
+            } 
+        }
+        return false;
+    }
+
     public void getLotAndSpot() {
         try {
             Statement st = connection.createStatement();
@@ -85,14 +115,14 @@ public class UserMenu {
 
     public void getUserType() {
         try {
-            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member NATURAL JOIN parking.user WHERE parking.member.user_id = ?", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member NATURAL JOIN parking.user WHERE parking.member.user_id = ?;");
             pst.setString(1, userID);
             ResultSet rset = pst.executeQuery();
 
             if (rset.next()) {
                 type = "member";
             } else {
-                PreparedStatement pstUser = connection.prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?");
+                PreparedStatement pstUser = connection.prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?;");
                 pstUser.setString(1, userID);
                 ResultSet userResult = pstUser.executeQuery();
 
@@ -240,7 +270,7 @@ public class UserMenu {
                             makeProfileUpdate("name", value);
                             isValid = true;
                         } else {
-                            System.out.println("\nInvalid input. Try again.");
+                            System.out.println("\nInvalid input (name has to have less than 30 characters). Try again.");
                         }
                     }
                     break;
@@ -251,19 +281,24 @@ public class UserMenu {
                             makeProfileUpdate("password", value);
                             isValid = true;
                         } else {
-                            System.out.println("\nInvalid input. Try again.");
+                            System.out.println("\nInvalid input (password has to have less than 20 characters). Try again.");
                         }
                     }
                     break;
                 case "3":
-                    while (!isValid) {
-                        String value = getNewValue();
-                        if (value.length() == 1 && lotAndSpot.keySet().contains(value)) {
-                            makeProfileUpdate("lot_id", value);
-                            isValid = true;
-                        } else {
-                            System.out.println("\nInvalid input. Try again.");
+                    if (type == "member") {
+                        while (!isValid) {
+                            String value = getNewValue();
+                            boolean isValidLot = isValidLot(value);
+                            if (isValidLot) {
+                                makeProfileUpdate("lot_id", value);
+                                isValid = true;
+                            } else {
+                                System.out.println("\nInvalid input (unavailable or invalid lot). Try again.");
+                            }
                         }
+                    } else {
+                        System.out.println("\nInvalid input. Try again.");
                     }
                     break;
                 case "4":
@@ -283,18 +318,16 @@ public class UserMenu {
                                 rset.close();
                                 pst.close();
 
-                                if (isNumeric(value)) {
-                                    if (lotAndSpot.get(lotId).contains(Integer.parseInt(value))) {
-                                        makeProfileUpdate("spot_id", value);
-                                        isValid = true;
-                                    } else {
-                                        System.out.println("\nInvalid input. Try again.");
-                                    }
+                                boolean isValidSpot = isValidSpot(lotId, value);
+                                if (isValidSpot) {
+                                    makeProfileUpdate("spot_id", value);
+                                    isValid = true;
                                 } else {
-                                    System.out.println("\nInvalid input. Try again.");
+                                    System.out.println("\nInvalid input (unavailable or invalid spot). Try again.");
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
+                                System.out.println("\nInvalid input (unavailable or invalid spot). Try again.");
                             }
                         }
                     } else {
@@ -345,17 +378,128 @@ public class UserMenu {
     }
 
     /*
-            _________________________________________
-        /  TODO: Finish this shitty code           \
-        \                                         /
-        -----------------------------------------
-                \    ^__^
+         _________________________________________
+        /  TODO: Life is wonderful until you have \
+        \  to code in Java.                       /
+         -----------------------------------------
+                \   ^__^
                 \   (oo)\_______
                     (__)\       )\/\
                         ||----w |
-                       ||     ||
+                        ||     ||
     */
-    public void makeReservationScreen() {}
+    public HashMap<String, String> reservationMenu() {
+        HashMap<String, String> reservationInfo = new HashMap<String, String>();
+        System.out.println("\nReservation");
+
+        System.out.print("Enter time in (format yyyy-MM-dd hh:mm:ss): ");
+        String timeIn = sc.nextLine();
+        reservationInfo.put("reservation_time_in", timeIn);
+
+        System.out.print("Enter time out (format yyyy-MM-dd hh:mm:ss): ");
+        String timeOut = sc.nextLine();
+        reservationInfo.put("reservation_time_out", timeOut);
+
+        System.out.print("Enter your license plate: ");
+        String licensePlate = sc.nextLine();
+        reservationInfo.put("license_plate", licensePlate);
+
+        System.out.print(String.format("Enter lot %s: ", lotAndSpot.keySet().toString()));
+        String lotId = sc.nextLine();
+        reservationInfo.put("lot_id", lotId);
+
+        System.out.print("Enter spot: ");
+        String spotId = sc.nextLine();
+        reservationInfo.put("spot_id", spotId);
+
+        return reservationInfo;
+    }
+
+    public void makeReservationScreen() {
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        HashMap<String, String> reservationInfo = reservationMenu();
+
+        boolean isValidTimeIn = isDate(reservationInfo.get("reservation_time_in"));
+        boolean isValidTimeOut = isDate(reservationInfo.get("reservation_time_out"));
+        boolean isValidLicensePlate = false;
+        if (reservationInfo.get("license_plate").length() == 7) {
+            isValidLicensePlate = true;
+        }
+        boolean isValidLot = isValidLot(reservationInfo.get("lot_id"));
+        boolean isValidSpot = isValidSpot(reservationInfo.get("lot_id"), reservationInfo.get("spot_id"));
+
+        if (isValidTimeIn && isValidTimeOut && isValidLicensePlate && isValidLot && isValidSpot) {
+            try {
+                Date timeIn = format.parse(reservationInfo.get("reservation_time_in"));
+                Date timeOut = format.parse(reservationInfo.get("reservation_time_out"));
+
+                if (timeIn.before(timeOut)) {
+                    makeReservation(timeIn, timeOut, reservationInfo.get("license_plate"), reservationInfo.get("lot_id"), reservationInfo.get("spot_id"));
+                } else {
+                    System.out.println("\nInvalid time in and time out. Try again.");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("\nInvalid inputs. Try again.");
+        }
+    }
+
+    public void makeReservation(Date timeIn, Date timeOut, String licensePlate, String lotId, String spotId) {
+        try {
+            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.reservation WHERE parking.reservation.lot_id = ? AND parking.reservation.spot_id = ?");
+            pst.setString(1, lotId);
+            pst.setInt(2, Integer.parseInt(spotId));
+            ResultSet rset = pst.executeQuery();
+
+            while (rset.next()) {
+                Date tempTimeIn = new Date(rset.getTimestamp("reservation_time_in").getTime());
+                Date tempTimeOut = new Date(rset.getTimestamp("reservation_time_out").getTime());
+
+                if ((tempTimeIn.after(timeIn) && tempTimeIn.before(timeIn)) || (tempTimeOut.before(timeOut) && tempTimeOut.after(timeIn))) {
+                    System.out.println("\nTime slot has taken. Try again.");
+                } else {
+                    String applicationType = "online";
+
+                    if (type == "member") {
+                        PreparedStatement pstMember = connection.prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?");
+                        pstMember.setString(1, userID);
+                        ResultSet memberResult = pstMember.executeQuery();
+
+                        if (memberResult.next()) {
+                            if (lotId.equals(memberResult.getString("lot_id")) && Integer.parseInt(spotId) == memberResult.getInt("spot_id")){
+                                applicationType = "member";
+                            }
+                        }
+
+                        memberResult.close();
+                        pstMember.close();
+                    }
+
+                    PreparedStatement pstReservation = connection.prepareStatement("INSERT INTO parking.reservation VALUES (?,?,?,?,?,?,?,?,?)");
+                    pstReservation.setString(1, userID);
+                    pstReservation.setTimestamp(2, new Timestamp(new Date().getTime()));
+                    pstReservation.setTimestamp(3, new Timestamp(timeIn.getTime()));
+                    pstReservation.setTimestamp(4, new Timestamp(timeOut.getTime()));
+                    pstReservation.setString(5, licensePlate);
+                    pstReservation.setString(6, applicationType);
+                    pstReservation.setString(7, null);
+                    pstReservation.setString(8, lotId);
+                    pstReservation.setInt(9, Integer.parseInt(spotId));
+
+                    pstReservation.executeUpdate();
+
+                    pstReservation.close();
+                }
+            }
+
+            rset.close();
+            pst.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public void logout() {
         try {
