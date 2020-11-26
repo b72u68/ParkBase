@@ -117,7 +117,7 @@ create table parking.reservation (
     reservation_time_out timestamp,
     license_plate char(7),
     application_type varchar(10) check (application_type in ('online', 'drive in', 'member')),
-    employee_id char(7) not null,
+    employee_id char(7),
     lot_id char(1) not null,
     spot_id int not null,
     primary key (user_id, time_created),

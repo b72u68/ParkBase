@@ -2,6 +2,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.Arrays;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -390,27 +391,68 @@ public class UserMenu {
     */
     public HashMap<String, String> reservationMenu() {
         HashMap<String, String> reservationInfo = new HashMap<String, String>();
+        ArrayList<String> validApplicationTypes = new ArrayList<String>(Arrays.asList("online", "member", "drive in"));
+
         System.out.println("\nReservation");
 
-        System.out.print("Enter time in (format yyyy-MM-dd hh:mm:ss): ");
-        String timeIn = sc.nextLine();
-        reservationInfo.put("reservation_time_in", timeIn);
+        System.out.print("Enter type of reservation (online, member, drive in): ");
+        String applicationType = sc.nextLine();
 
-        System.out.print("Enter time out (format yyyy-MM-dd hh:mm:ss): ");
-        String timeOut = sc.nextLine();
-        reservationInfo.put("reservation_time_out", timeOut);
+        try {
+            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?");
+            pst.setString(1, userID);
+            ResultSet rset = pst.executeQuery();
 
-        System.out.print("Enter your license plate: ");
-        String licensePlate = sc.nextLine();
-        reservationInfo.put("license_plate", licensePlate);
+            if (validApplicationTypes.contains(applicationType)) {
+                reservationInfo.put("application_type", applicationType);
+                if (rset.next() && applicationType.equals("member")) {
+                    System.out.print("Enter time in (format yyyy-MM-dd hh:mm:ss): ");
+                    String timeIn = sc.nextLine();
+                    reservationInfo.put("reservation_time_in", timeIn);
 
-        System.out.print(String.format("Enter lot %s: ", lotAndSpot.keySet().toString()));
-        String lotId = sc.nextLine();
-        reservationInfo.put("lot_id", lotId);
+                    System.out.print("Enter time out (format yyyy-MM-dd hh:mm:ss): ");
+                    String timeOut = sc.nextLine();
+                    reservationInfo.put("reservation_time_out", timeOut);
 
-        System.out.print("Enter spot: ");
-        String spotId = sc.nextLine();
-        reservationInfo.put("spot_id", spotId);
+                    reservationInfo.put("license_plate", rset.getString("registered_license_plate"));
+                    reservationInfo.put("lot_id", rset.getString("lot_id"));
+                    reservationInfo.put("spot_id", Integer.toString(rset.getInt("spot_id")));
+
+                } else if (!applicationType.equals("member")) {
+                    System.out.print("Enter time in (format yyyy-MM-dd hh:mm:ss): ");
+                    String timeIn = sc.nextLine();
+                    reservationInfo.put("reservation_time_in", timeIn);
+
+                    System.out.print("Enter time out (format yyyy-MM-dd hh:mm:ss): ");
+                    String timeOut = sc.nextLine();
+                    reservationInfo.put("reservation_time_out", timeOut);
+
+                    System.out.print("Enter your license plate: ");
+                    String licensePlate = sc.nextLine();
+                    reservationInfo.put("license_plate", licensePlate);
+
+                    System.out.print(String.format("Enter lot %s: ", lotAndSpot.keySet().toString()));
+                    String lotId = sc.nextLine();
+                    reservationInfo.put("lot_id", lotId);
+
+                    System.out.print("Enter spot: ");
+                    String spotId = sc.nextLine();
+                    reservationInfo.put("spot_id", spotId);
+
+                } else if (!type.equals("member") && applicationType.equals("member")) {
+                    System.out.println("\nInvalid application type. Try again.");
+                    return null;
+                }
+            } else {
+                System.out.println("\nInvalid application type. Try again.");
+                return null;
+            }
+
+            rset.close();
+            pst.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return reservationInfo;
     }
@@ -419,34 +461,37 @@ public class UserMenu {
         DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         HashMap<String, String> reservationInfo = reservationMenu();
 
-        boolean isValidTimeIn = isDate(reservationInfo.get("reservation_time_in"));
-        boolean isValidTimeOut = isDate(reservationInfo.get("reservation_time_out"));
-        boolean isValidLicensePlate = false;
-        if (reservationInfo.get("license_plate").length() == 7) {
-            isValidLicensePlate = true;
-        }
-        boolean isValidLot = isValidLot(reservationInfo.get("lot_id"));
-        boolean isValidSpot = isValidSpot(reservationInfo.get("lot_id"), reservationInfo.get("spot_id"));
-
-        if (isValidTimeIn && isValidTimeOut && isValidLicensePlate && isValidLot && isValidSpot) {
-            try {
-                Date timeIn = format.parse(reservationInfo.get("reservation_time_in"));
-                Date timeOut = format.parse(reservationInfo.get("reservation_time_out"));
-
-                if (timeIn.before(timeOut)) {
-                    makeReservation(timeIn, timeOut, reservationInfo.get("license_plate"), reservationInfo.get("lot_id"), reservationInfo.get("spot_id"));
-                } else {
-                    System.out.println("\nInvalid time in and time out. Try again.");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+        if (reservationInfo != null) {
+            boolean isValidTimeIn = isDate(reservationInfo.get("reservation_time_in"));
+            boolean isValidTimeOut = isDate(reservationInfo.get("reservation_time_out"));
+            boolean isValidLicensePlate = false;
+            if (reservationInfo.get("license_plate").length() == 7) {
+                isValidLicensePlate = true;
             }
-        } else {
-            System.out.println("\nInvalid inputs. Try again.");
+            boolean isValidLot = isValidLot(reservationInfo.get("lot_id"));
+            boolean isValidSpot = isValidSpot(reservationInfo.get("lot_id"), reservationInfo.get("spot_id"));
+
+            if (isValidTimeIn && isValidTimeOut && isValidLicensePlate && isValidLot && isValidSpot) {
+                try {
+                    Date timeIn = format.parse(reservationInfo.get("reservation_time_in"));
+                    Date timeOut = format.parse(reservationInfo.get("reservation_time_out"));
+
+                    if (timeIn.before(timeOut)) {
+                        makeReservation(reservationInfo.get("application_type"), timeIn, timeOut, reservationInfo.get("license_plate"), reservationInfo.get("lot_id"), reservationInfo.get("spot_id"));
+                    } else {
+                        System.out.println("\nInvalid time in and time out. Try again.");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("\nInvalid inputs. Try again.");
+            }
         }
     }
 
-    public void makeReservation(Date timeIn, Date timeOut, String licensePlate, String lotId, String spotId) {
+    public void makeReservation(String applicationType, Date timeIn, Date timeOut, String licensePlate, String lotId, String spotId) {
+        boolean isValid = true;
         try {
             PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.reservation WHERE parking.reservation.lot_id = ? AND parking.reservation.spot_id = ?");
             pst.setString(1, lotId);
@@ -457,45 +502,65 @@ public class UserMenu {
                 Date tempTimeIn = new Date(rset.getTimestamp("reservation_time_in").getTime());
                 Date tempTimeOut = new Date(rset.getTimestamp("reservation_time_out").getTime());
 
-                if ((tempTimeIn.after(timeIn) && tempTimeIn.before(timeIn)) || (tempTimeOut.before(timeOut) && tempTimeOut.after(timeIn))) {
+                if (tempTimeIn.equals(timeIn) || tempTimeOut.equals(timeOut) || (tempTimeIn.after(timeIn) && tempTimeIn.before(timeOut)) || (tempTimeOut.before(timeOut) && tempTimeOut.after(timeIn))) {
+                    isValid = false;
                     System.out.println("\nTime slot has taken. Try again.");
-                } else {
-                    String applicationType = "online";
-
-                    if (type == "member") {
-                        PreparedStatement pstMember = connection.prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?");
-                        pstMember.setString(1, userID);
-                        ResultSet memberResult = pstMember.executeQuery();
-
-                        if (memberResult.next()) {
-                            if (lotId.equals(memberResult.getString("lot_id")) && Integer.parseInt(spotId) == memberResult.getInt("spot_id")){
-                                applicationType = "member";
-                            }
-                        }
-
-                        memberResult.close();
-                        pstMember.close();
-                    }
-
-                    PreparedStatement pstReservation = connection.prepareStatement("INSERT INTO parking.reservation VALUES (?,?,?,?,?,?,?,?,?)");
-                    pstReservation.setString(1, userID);
-                    pstReservation.setTimestamp(2, new Timestamp(new Date().getTime()));
-                    pstReservation.setTimestamp(3, new Timestamp(timeIn.getTime()));
-                    pstReservation.setTimestamp(4, new Timestamp(timeOut.getTime()));
-                    pstReservation.setString(5, licensePlate);
-                    pstReservation.setString(6, applicationType);
-                    pstReservation.setString(7, null);
-                    pstReservation.setString(8, lotId);
-                    pstReservation.setInt(9, Integer.parseInt(spotId));
-
-                    pstReservation.executeUpdate();
-
-                    pstReservation.close();
+                    break;
                 }
+            }
+
+            if (isValid) {
+                PreparedStatement pstReservation = connection.prepareStatement("INSERT INTO parking.reservation VALUES (?,?,?,?,?,?,?,?,?)");
+                pstReservation.setString(1, userID);
+                pstReservation.setTimestamp(2, new Timestamp(new Date().getTime()));
+                pstReservation.setTimestamp(3, new Timestamp(timeIn.getTime()));
+                pstReservation.setTimestamp(4, new Timestamp(timeOut.getTime()));
+                pstReservation.setString(5, licensePlate);
+                pstReservation.setString(6, applicationType);
+                pstReservation.setString(7, null);
+                pstReservation.setString(8, lotId);
+                pstReservation.setInt(9, Integer.parseInt(spotId));
+
+                pstReservation.executeUpdate();
+
+                pstReservation.close();
+
+                System.out.println("\nMake reservation successfully.");
+
+                printReservationInfo(applicationType, timeIn, timeOut, licensePlate, lotId, spotId);
             }
 
             rset.close();
             pst.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void printReservationInfo(String applicationType, Date timeIn, Date timeOut, String licensePlate, String lotId, String spotId) {
+        try {
+            PreparedStatement pstReservation = connection.prepareStatement("SELECT * FROM parking.reservation WHERE parking.reservation.user_id = ? AND parking.reservation.reservation_time_in = ? AND parking.reservation.reservation_time_out = ? AND parking.reservation.lot_id = ? AND parking.reservation.spot_id = ?");
+            pstReservation.setString(1, userID);
+            pstReservation.setTimestamp(2, new Timestamp(timeIn.getTime()));
+            pstReservation.setTimestamp(3, new Timestamp(timeOut.getTime()));
+            pstReservation.setString(4, lotId);
+            pstReservation.setInt(5, Integer.parseInt(spotId));
+
+            ResultSet rset = pstReservation.executeQuery();
+
+            while (rset.next()) {
+                System.out.println("\nReservation Information");
+                System.out.println(String.format("User: %s", userID));
+                System.out.println(String.format("License plate: %s", rset.getString("license_plate")));
+                System.out.println(String.format("Time in: %s", timeIn.toString()));
+                System.out.println(String.format("Time out: %s", timeOut.toString()));
+                System.out.println(String.format("Type: %s", rset.getString("application_type")));
+                System.out.println(String.format("Lot: %s", rset.getString("lot_id")));
+                System.out.println(String.format("Lot: %d", rset.getInt("spot_id")));
+            }
+
+            rset.close();
+            pstReservation.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
