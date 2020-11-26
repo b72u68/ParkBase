@@ -6,6 +6,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -67,7 +68,7 @@ public class Login extends JFrame{
 					if (rs.next()) {
 						setVisible(false); // HIDE THE FRAME
 						dispose(); // CLOSE OUT THE WINDOW
-						UserMenu userMenu = new UserMenu(getConnection(), "7463462");
+						UserMenu userMenu = new UserMenu(getConnection(), "7463462", new Date());
 			            userMenu.requestUpdate();
 					} else
 						lblStatus.setText("User not found");

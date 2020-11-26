@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
+import java.util.Date;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -90,7 +91,8 @@ public class Initializer extends JFrame {
 		            
 		            //to test UserMenu, uncomment the following two statements and comment out "new Login...;" above
 		            
-		            new UserMenu(getConnection(), "7463462");
+		            UserMenu userMenu = new UserMenu(getConnection(), "7463462", new Date());
+		            userMenu.UserMenuScreen();
 		            //userMenu.requestUpdate();
 
 				} catch (FileNotFoundException ex) {

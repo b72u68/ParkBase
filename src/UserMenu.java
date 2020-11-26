@@ -1,6 +1,7 @@
 import java.util.Date;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,24 +9,19 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JComboBox;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-
-@SuppressWarnings("serial")
-public class UserMenu extends JFrame {
-	private Connection connection;
+public class UserMenu {
+    private Connection connection;
+    private Scanner sc = new Scanner(System.in);
     private String userID;
     private Date loginTime;
     private Date logoutTime;
     private HashMap<String, ArrayList<Integer>> lotAndSpot = new HashMap<String, ArrayList<Integer>>();
+
+    public UserMenu(Connection connection, String userID, Date loginTime) {
+        setConnection(connection);
+        setUserID(userID);
+        setLoginTime(loginTime);
+    }
 
     public String getUserID() {
         return userID;
@@ -47,11 +43,11 @@ public class UserMenu extends JFrame {
         this.userID = userID;
     }
 
-    /*
     private void setLoginTime(Date loginTime) {
         this.loginTime = loginTime;
     }
 
+    /*
     private void setLogoutTime(Date logoutTime) {
         this.logoutTime = logoutTime;
     }
@@ -79,48 +75,127 @@ public class UserMenu extends JFrame {
         }
     }
 
-    public UserMenu(Connection connection, String userID) {
-        super("User Menu");
-
-        setConnection(connection);
-        setUserID(userID);
-        getLotAndSpot();
-        
-        setSize(450, 270);
-        setLayout(new GridLayout(5, 2));
-        setLocationRelativeTo(null);
-
-        // buttons
-        JButton btnPr = new JButton("View Profile");
-        JButton btnUp = new JButton("Request Update Profile");
-        JButton btnMR = new JButton("Make Reservation");
-        JButton btnLo = new JButton("Logout");
-
-        // add objects to frame
-        add(btnPr);
-        add(btnUp);
-        add(btnMR);
-        add(btnLo);
-
-		btnPr.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-                viewProfileMenu();
-            }
-        });
-        btnUp.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                requestUpdateMenu();
-            }
-        });
-        btnMR.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-            }
-        });
+    public String UserMenuOptions() {
+        System.out.println("\nUser Menu");
+        System.out.println("1. View Profile\n2. Update Profile\n3. Make Reservation\n4. Logout");
+        System.out.print("Enter your option here: ");
+        String option = sc.nextLine();
+        return option;
     }
+
+    public void UserMenuScreen() {
+        boolean exit = false;
+        while (!exit) {
+            String option = UserMenuOptions();
+
+            switch (option) {
+                case "1":
+                    viewProfileScreen();
+                    break;
+                case "2":
+                    updateProfileScreen();
+                    break;
+                case "3":
+                    makeReservationScreen();
+                    break;
+                case "4":
+                    logout();
+                    exit = true;
+                    break;
+                default:
+                    System.out.println("Invalid option. Try again.");
+            }
+        }
+    }
+
+    public void viewProfileScreen() {
+        try {
+            String type = "";
+
+            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member NATURAL JOIN parking.user WHERE parking.member.user_id = ?", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            pst.setString(1, userID);
+            ResultSet rset = pst.executeQuery();
+
+            if (rset.next()) {
+                type = "member";
+                PreparedStatement pstMember = connection.prepareStatement("SELECT * FROM parking.user NATURAL JOIN parking.member, parking.parking_lot WHERE parking.member.user_id = ? AND parking.member.lot_id = parking.parking_lot.lot_id");
+                pstMember.setString(1, userID);
+                ResultSet memberResult = pstMember.executeQuery();
+                
+                if (memberResult.next()) {
+                    printUserProfile(memberResult, type);
+                }
+
+                memberResult.close();
+                pstMember.close();
+            } else {
+                PreparedStatement pstTemp = connection.prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?");
+                pstTemp.setString(1, userID);
+                ResultSet tempResult = pstTemp.executeQuery();
+                
+                if (tempResult.next()) {
+                    type = "user";
+                    PreparedStatement pstUser = connection.prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?");
+                    pstTemp.setString(1, userID);
+                    ResultSet userResult = pstUser.executeQuery();
+                    
+                    if (userResult.next()) {
+                        printUserProfile(userResult, type);
+                    }
+
+                    userResult.close();
+                    pstUser.close();
+                } else {
+                    type = "employee";
+                    PreparedStatement pstEmployee = connection.prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?");
+                    pstEmployee.setString(1, userID);
+                    ResultSet employeeResult = pstEmployee.executeQuery();
+
+                    System.out.println(String.format("Name: %s", employeeResult.getString("name")));
+                    System.out.println(String.format("Password: %s", employeeResult.getString("password")));
+                    System.out.println(String.format("Type: %s", employeeResult.getString("type")));
+                    System.out.println(String.format("Salary: %f", employeeResult.getDouble("salary")));
+
+                    //printUserProfile(employeeResult, type);
+
+                    pstEmployee.close();
+                    employeeResult.close();
+                }
+                
+                tempResult.close();
+                pstTemp.close();
+            }
+            
+            rset.close();
+            pst.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void printUserProfile(ResultSet rset, String type) {
+        try {
+            System.out.println("\nUser Profile");
+            System.out.println(String.format("Name: %s", rset.getString("name")));
+            System.out.println(String.format("Password: %s", rset.getString("password")));
+
+            if (type == "member") {
+                System.out.println(String.format("Registered license plate: %s", rset.getString("registered_license_plate")));
+                System.out.println(String.format("Registered lot: %s", rset.getString("lot_id")));
+                System.out.println(String.format("Registered spot: %d", rset.getInt("spot_id")));
+                System.out.println(String.format("Membership fee: %f", rset.getDouble("membership_fee")));
+            } else if (type == "employee") {
+                System.out.println(String.format("Type: %s", rset.getString("type")));
+                System.out.println(String.format("Salary: %f", rset.getDouble("salary")));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateProfileScreen() {}
+    public void makeReservationScreen() {}
+    public void logout() {}
 
     public boolean isNumeric(String str) {
         if (str == null || str.strip() == "") {
@@ -135,160 +210,5 @@ public class UserMenu extends JFrame {
         return true;
     }
 
-    public void viewProfileMenu() {
-        try {
-            boolean foundProfile = false;
-
-            JFrame f = new JFrame();
-            f.setSize(400,200);
-
-            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member NATURAL JOIN parking.user WHERE parking.member.user_id = ?;",
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-            pst.setString(1, userID);
-            ResultSet profile = pst.executeQuery();
-
-            while (profile.next()) {
-                foundProfile = true;
-            }
-
-            if (!foundProfile) {
-                pst = connection.prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?;",
-                        ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-                pst.setString(1, userID);
-                profile = pst.executeQuery();
-            }
-            
-            JTable jt = new JTable(profileJTable.buildTableModel(profile));
-            jt.setBounds(30, 40, 200, 400);
-            JScrollPane sp = new JScrollPane(jt);
-            f.add(sp);
-            f.setVisible(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void requestUpdateMenu() {
-        String[] updateFields;
-        String[] userUpdateFields = {"name", "password"};
-        String[] memberUpdateFields = {"name", "password", "lot_id", "spot_id"};
-        String updateValueTemp = "";
-
-        try {
-            boolean isMember = false;
-            boolean isValid = false;
-
-            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?;",
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-            pst.setString(1, userID);
-            ResultSet profile = pst.executeQuery();
-
-            while (!profile.next()) {
-                isMember = true;
-            }
-
-            if (isMember) {
-                updateFields = memberUpdateFields;
-            } else {
-                updateFields = userUpdateFields;
-            }
-            JFrame f = new JFrame();
-            f.setSize(400,200);
-
-            final JComboBox<String> fieldCB = new JComboBox<String>(updateFields);
-
-            fieldCB.setVisible(true);
-            f.add(fieldCB);
-
-            String updateField = fieldCB.getSelectedItem().toString();
-            
-            if (updateField == "name" || updateField == "password") {
-                updateValueTemp = JOptionPane.showInputDialog(null, "Enter new value");
-
-            } else if (updateField == "lot_id") {
-                final JComboBox<String> lotCB = new JComboBox<String>(lotAndSpot.keySet().stream().toArray(String[] ::new));
-
-                lotCB.setVisible(updateField == "lot_id");
-                f.add(fieldCB);
-
-                updateValueTemp = lotCB.getSelectedItem().toString();
-
-            } else if (updateField == "spot_id") {
-                Statement st = connection.createStatement();
-                ResultSet member = st.executeQuery(String.format("SELECT * FROM parking.member WHERE parking.member.id = \"%s\"", userID));
-                ArrayList<Integer> spotIds = lotAndSpot.get(member.getString(3));
-
-                final JComboBox<Integer> spotCB = new JComboBox<Integer>(spotIds.toArray(Integer[] ::new));
-
-                spotCB.setVisible(updateField == "spot_id");
-                f.add(fieldCB);
-
-                updateValueTemp = spotCB.getSelectedItem().toString();
-            }
-
-            switch (updateField) {
-                case "name":
-                    if (updateValueTemp.length() <= 30) {
-                        isValid = true;
-                    }
-                    break;
-                case "password":
-                    if (updateValueTemp.length() <= 20) {
-                        isValid = true;
-                    }
-                    break;
-                case "lot_id":
-                    if (updateValueTemp != null) {
-                        isValid = true;
-                    }
-                    break;
-                case "spot_id":
-                    if (updateValueTemp != null) {
-                        isValid = true;
-                    }
-                    break;
-            }
-
-            String updateValue = updateValueTemp;
-
-            JButton confirm = new JButton("OK");
-            f.add(confirm);
-
-            if (isValid) {
-                confirm.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        try {
-                            PreparedStatement pst = connection.prepareStatement("INSERT INTO parking.update_form VALUES (?,?,?,?);");
-
-                            pst.setString(1, userID);
-                            pst.setTimestamp(2, new java.sql.Timestamp(new Date().getTime()));
-                            pst.setString(3, updateField);
-                            if (updateField == "spot_id") {
-                                pst.setInt(4, Integer.parseInt(updateValue));
-                            } else {
-                                pst.setString(4, updateValue);
-                            }
-
-                            pst.executeUpdate();
-                        } catch (SQLException ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-                });
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // TODO: Finish this screen
-    public void makeReservationScreen() {
-        try {
-            JFrame f = new JFrame();
-            f.setSize(400,200);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    public void viewProfileMenu() {}
 }
