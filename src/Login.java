@@ -69,7 +69,7 @@ public class Login extends JFrame{
 						setVisible(false); // HIDE THE FRAME
 						dispose(); // CLOSE OUT THE WINDOW
 						UserMenu userMenu = new UserMenu(getConnection(), "7463462", new Date());
-			            userMenu.requestUpdate();
+			            //userMenu.requestUpdate();
 					} else
 						lblStatus.setText("User not found");
 				} catch (SQLException ex) {

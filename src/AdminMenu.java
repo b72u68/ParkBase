@@ -15,11 +15,15 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -146,7 +150,7 @@ public class AdminMenu extends JFrame {
 									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 								pst.setString(1, userID);
 								ResultSet profile = pst.executeQuery();
-								
+								pst.close();
 								if (profile.next()) {
 									pst = getConnection().prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?;",
 											ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
@@ -157,6 +161,7 @@ public class AdminMenu extends JFrame {
 									} else {
 										update_confirmation_form(UpFrame, "user", userID);			//current user is just a user
 									}
+									pst.close();
 								} else {
 									pst = getConnection().prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?;",
 											ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
@@ -175,6 +180,7 @@ public class AdminMenu extends JFrame {
 											update_confirmation_form(UpFrame, "user", userID);
 										}
 									}
+									pst.close();
 								}
 								UpFrame.setVisible(true);
 							} catch (SQLException ex) {
@@ -247,81 +253,146 @@ public class AdminMenu extends JFrame {
 					}
 					//get a table of all spots available at each hour
 					System.out.println("Retrieved all intermediate dates.");
-					for (int i=0; i<ctDayArray.size(); i++) {
-						System.out.println(ctDayArray.get(i) + "\t");
-						for (int hour=0; hour<24; hour++) {
-							try {
-								Statement statement = getConnection().createStatement();
-								//select all the spots that are not in the set of spots with in times before the iterative day and with out times after the iterative day
-								ResultSet freeSpots = statement.executeQuery("SELECT lot_id, spot_id FROM parking.spot"
+					Vector<String> columnNames = new Vector<String>();
+					int columnCount = ctDayArray.size();
+					columnNames.add(" ");
+					for (int column = 0; column < columnCount; column++) {
+						columnNames.add(ctDayArray.get(column).toString());
+					}
+					Vector<Vector<ArrayList<String>>> data = new Vector<Vector<ArrayList<String>>>();
+					
+					for (int hour=0; hour<24; hour++) {
+						data.add(new Vector<ArrayList<String>>());
+						
+						for (int i=0; i<ctDayArray.size()+1; i++) {
+							
+							data.get(hour).add(new ArrayList<String>());
+							if (i==0) {
+								data.get(hour).get(i).add(hour + ":00-" + (hour+1) + ":00");
+							} else {
+								try {
+									Statement statement = getConnection().createStatement();
+									//select all the spots that are not in the set of spots with in times before the iterative day and with out times after the iterative day
+									ResultSet freeSpots = statement.executeQuery("SELECT lot_id, spot_id FROM parking.spot"
 										+ " WHERE NOT EXISTS ("
 											+ "SELECT C.lot_id, C.spot_id FROM parking.reservation as C"
-											+ " WHERE reservation_time_in <= '" + ctDayArray.get(i)
-											+ "' AND reservation_time_out >= '" + ctDayArray.get(i)
+											+ " WHERE reservation_time_in <= '" + ctDayArray.get(i-1)
+											+ "' AND reservation_time_out >= '" + ctDayArray.get(i-1)
 											+ "' AND date_part('hour', reservation_time_in) <= " + hour
 											+ " AND date_part('hour', reservation_time_out) >= " + hour 
 											+ " AND C.lot_id = parking.spot.lot_id"
 											+ " AND C.spot_id = parking.spot.spot_id" 
 										+ ");"
-								);
-								while (freeSpots.next()) {
-									System.out.print(freeSpots.getString(1) + freeSpots.getString(2) + "  ");
+									);
+								
+									while (freeSpots.next()) {
+										data.get(hour).get(i).add(freeSpots.getString(1)+freeSpots.getString(2));
+									}
+									statement.close();
+									freeSpots.close();
+									connection.close();
+								} catch (SQLException ex) {
+									System.out.println("Error: Could not select spot based on day and hour");
+									ex.printStackTrace();
 								}
-								statement.close();
-								freeSpots.close();
-								connection.close();
-							} catch (SQLException ex) {
-								System.out.println("Error: Could not select spot based on day and hour");
-								ex.printStackTrace();
-							}
-							System.out.print("\t");
+							} 
 						}
-						System.out.print("\n");
 					}
-					/*JFrame report = new JFrame();
-					JTable spot_calendar = new JTable(open_spots, stringDaysArray);*/
+					JFrame report = new JFrame();
+					report.setSize(500,500);
+					JTable spot_calendar = new JTable(data, columnNames);
+					//spot_calendar.setBounds(30, 40, 200, 400);
+					spot_calendar.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+					JScrollPane sp = new JScrollPane(spot_calendar, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+					report.add(sp);
+					report.setVisible(true);
 					
+					
+					//gets profit within month interval listed
 					ResultSet member_pay = stm.executeQuery("SELECT * FROM parking.member_pay;");
 					ResultSet guest_pay = stm.executeQuery("SELECT * FROM parking.guest_pay;");
 					ResultSet lot_ratios = stm.executeQuery("SELECT * FROM parking.lot_ratios;");
 					ResultSet times = stm.executeQuery("SELECT * FROM parking.times;");
 					
-					System.out.println("Member pay: ");
+					JFrame reportPay = new JFrame();
+					reportPay.setSize(500,500);
+					JPanel mainPanel = new JPanel();
+					mainPanel.setLayout(new GridLayout(6, 1));
+					reportPay.add(mainPanel);
+					
+
 					ResultSetMetaData metaData = member_pay.getMetaData();
 					int numCol = metaData.getColumnCount();
+					Map<String,double[]> months = new Hashtable<String,double[]>();
 					while(member_pay.next()) {
-						for (int i=1; i<=numCol; i++) {
-							System.out.print(member_pay.getObject(i) + ", ");
+						months.putIfAbsent(member_pay.getString(1), new double[12]);
+						for (int i=(int)member_pay.getDouble(2); i<=(int)member_pay.getDouble(3); i++) {
+							months.get(member_pay.getString(1))[i-1] += member_pay.getDouble(4);
 						}
-						System.out.print("\n");
 					}
-					System.out.println("Guest pay: ");
+					//for every key in months, make a frame element that shows every month and the revenue corresponding with that month
+					for (String key : months.keySet()) {
+						JPanel jp = new JPanel();
+						String[][] monthsArray = new String[1][13];
+						monthsArray[0][0] = key;
+						for (int i=1; i<13; i++) {
+							monthsArray[0][i] = String.valueOf(months.get(key)[i-1]);
+						}
+						JTable memTable = new JTable(monthsArray, new String[]{"MEMBER", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"});
+						jp.add(new JScrollPane(memTable));
+						mainPanel.add(jp);
+					}
 					metaData = guest_pay.getMetaData();
 					numCol = metaData.getColumnCount();
+					months.clear();
+					
+					
 					while(guest_pay.next()) {
-						for (int i=1; i<=numCol; i++) {
-							System.out.print(guest_pay.getObject(i) + ", ");
+						months.putIfAbsent(guest_pay.getString(1), new double[12]);
+						for (int i=(int)guest_pay.getDouble(2); i<=(int)guest_pay.getDouble(3); i++) {
+							months.get(guest_pay.getString(1))[i-1] += guest_pay.getDouble(4);
 						}
-						System.out.print("\n");
 					}
-					System.out.println("Lot ratios: ");
+					//for every key in months, make a frame element that shows every month and the revenue corresponding with that month
+					for (String key : months.keySet()) {
+						JPanel jp = new JPanel();
+						String[][] monthsArray = new String[1][13];
+						monthsArray[0][0] = key;
+						for (int i=1; i<13; i++) {
+							monthsArray[0][i] = String.valueOf(months.get(key)[i-1]);
+						}
+						JTable guestTable = new JTable(monthsArray, new String[]{"GUEST", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"});
+						jp.add(new JScrollPane(guestTable));
+						mainPanel.add(jp);
+					}
+					
+	
 					metaData = lot_ratios.getMetaData();
 					numCol = metaData.getColumnCount();
+					String[][] ratioArray = new String[months.size()][4];
+					int rowCount = 0;
 					while(lot_ratios.next()) {
-						for (int i=1; i<=numCol; i++) {
-							System.out.print(lot_ratios.getObject(i) + ", ");
-						}
-						System.out.print("\n");
+						ratioArray[rowCount][0] = lot_ratios.getString(1);
+						ratioArray[rowCount][1] = String.valueOf(100*(double)lot_ratios.getInt(2)/(double)lot_ratios.getInt(5)) + "%";
+						ratioArray[rowCount][2] = String.valueOf(100*(double)lot_ratios.getInt(3)/(double)lot_ratios.getInt(5)) + "%";
+						ratioArray[rowCount][3] = String.valueOf(100*(double)lot_ratios.getInt(4)/(double)lot_ratios.getInt(5)) + "%";
+						rowCount++;
 					}
-					System.out.println("Times: ");
-					metaData = times.getMetaData();
-					numCol = metaData.getColumnCount();
-					while(times.next()) {
-						for (int i=1; i<=numCol; i++) {
-							System.out.print(times.getObject(i) + ", ");
-						}
-						System.out.print("\n");
-					}
+					JTable ratTable = new JTable(ratioArray, new String[]{" ", "% Members", "% Online", "% Drive In"});
+					JPanel ratPanel = new JPanel();
+					ratPanel.add(new JScrollPane(ratTable));
+					mainPanel.add(ratPanel);
+					
+
+					JTable tiTable = new JTable(pUpdateJTable.buildTableModel(times));
+					JPanel tiPanel = new JPanel();
+					tiPanel.add(new JScrollPane(tiTable));
+					mainPanel.add(tiPanel);
+					
+					//adding the main panel
+					JScrollPane mp = new JScrollPane(mainPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+					reportPay.add(mp);
+					reportPay.setVisible(true);
 				} catch (SQLException ex) {
 					ex.printStackTrace();
 				}
