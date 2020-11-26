@@ -504,7 +504,7 @@ public class UserMenu {
 
                 if (tempTimeIn.equals(timeIn) || tempTimeOut.equals(timeOut) || (tempTimeIn.after(timeIn) && tempTimeIn.before(timeOut)) || (tempTimeOut.before(timeOut) && tempTimeOut.after(timeIn))) {
                     isValid = false;
-                    System.out.println("\nTime slot has taken. Try again.");
+                    System.out.println("\nTime slot was taken. Try again.");
                     break;
                 }
             }
@@ -539,7 +539,7 @@ public class UserMenu {
 
     public void printReservationInfo(String applicationType, Date timeIn, Date timeOut, String licensePlate, String lotId, String spotId) {
         try {
-            PreparedStatement pstReservation = connection.prepareStatement("SELECT * FROM parking.reservation WHERE parking.reservation.user_id = ? AND parking.reservation.reservation_time_in = ? AND parking.reservation.reservation_time_out = ? AND parking.reservation.lot_id = ? AND parking.reservation.spot_id = ?");
+            PreparedStatement pstReservation = connection.prepareStatement("SELECT * FROM parking.reservation NATURAL JOIN parking.parking_lot WHERE parking.reservation.user_id = ? AND parking.reservation.reservation_time_in = ? AND parking.reservation.reservation_time_out = ? AND parking.reservation.lot_id = ? AND parking.reservation.spot_id = ?");
             pstReservation.setString(1, userID);
             pstReservation.setTimestamp(2, new Timestamp(timeIn.getTime()));
             pstReservation.setTimestamp(3, new Timestamp(timeOut.getTime()));
@@ -556,7 +556,13 @@ public class UserMenu {
                 System.out.println(String.format("Time out: %s", timeOut.toString()));
                 System.out.println(String.format("Type: %s", rset.getString("application_type")));
                 System.out.println(String.format("Lot: %s", rset.getString("lot_id")));
-                System.out.println(String.format("Lot: %d", rset.getInt("spot_id")));
+                System.out.println(String.format("Spot: %d", rset.getInt("spot_id")));
+
+                if (applicationType.equals("member")) {
+                    System.out.println(String.format("Fee: %f", rset.getDouble("membership_fee")));
+                } else {
+                    System.out.println(String.format("Fee: %f", rset.getDouble("guest_fee")));
+                }
             }
 
             rset.close();
