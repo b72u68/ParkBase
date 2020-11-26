@@ -19,8 +19,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
+@SuppressWarnings("serial")
 public class UserMenu extends JFrame {
-    private Connection connection;
+	private Connection connection;
     private String userID;
     private Date loginTime;
     private Date logoutTime;
@@ -46,6 +47,7 @@ public class UserMenu extends JFrame {
         this.userID = userID;
     }
 
+    /*
     private void setLoginTime(Date loginTime) {
         this.loginTime = loginTime;
     }
@@ -53,6 +55,7 @@ public class UserMenu extends JFrame {
     private void setLogoutTime(Date logoutTime) {
         this.logoutTime = logoutTime;
     }
+    */
 
     public void getLotAndSpot() {
         try {
@@ -76,14 +79,13 @@ public class UserMenu extends JFrame {
         }
     }
 
-    public UserMenu() {}
-
     public UserMenu(Connection connection, String userID) {
         super("User Menu");
+
         setConnection(connection);
         setUserID(userID);
         getLotAndSpot();
-
+        
         setSize(450, 270);
         setLayout(new GridLayout(5, 2));
         setLocationRelativeTo(null);
