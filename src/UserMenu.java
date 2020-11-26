@@ -16,7 +16,6 @@ public class UserMenu {
     private String userID;
     private String type;
     private Date loginTime;
-    private Date logoutTime;
     private HashMap<String, ArrayList<Integer>> lotAndSpot = new HashMap<String, ArrayList<Integer>>();
 
     public UserMenu(Connection connection, String userID, Date loginTime) {
@@ -35,10 +34,6 @@ public class UserMenu {
         return loginTime;
     }
 
-    public Date getLogoutTime() {
-        return logoutTime;
-    }
-
     public void setConnection(Connection connection) {
         this.connection = connection;
     }
@@ -50,12 +45,6 @@ public class UserMenu {
     private void setLoginTime(Date loginTime) {
         this.loginTime = loginTime;
     }
-
-    /*
-    private void setLogoutTime(Date logoutTime) {
-        this.logoutTime = logoutTime;
-    }
-    */
 
     public boolean isNumeric(String str) {
         if (str == null || str.strip() == "") {
@@ -329,7 +318,7 @@ public class UserMenu {
                 pst.setString(2, userID);
                 pst.executeUpdate();
 
-                System.out.println("Update Profile successfully.");
+                System.out.println("Update profile successfully.");
 
                 pst.close();
             } catch (Exception e) {
@@ -346,7 +335,7 @@ public class UserMenu {
                 pst.setString(2, userID);
                 pst.executeUpdate();
 
-                System.out.println("Update Profile successfully.");
+                System.out.println("Update profile successfully.");
 
                 pst.close();
             } catch (Exception e) {
@@ -355,6 +344,17 @@ public class UserMenu {
         }
     }
 
+    /*
+            _________________________________________
+        /  TODO: Finish this shitty code           \
+        \                                         /
+        -----------------------------------------
+                \    ^__^
+                \   (oo)\_______
+                    (__)\       )\/\
+                        ||----w |
+                       ||     ||
+    */
     public void makeReservationScreen() {}
 
     public void logout() {
