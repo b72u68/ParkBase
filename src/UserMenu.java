@@ -476,7 +476,7 @@ public class UserMenu {
                     Date timeIn = format.parse(reservationInfo.get("reservation_time_in"));
                     Date timeOut = format.parse(reservationInfo.get("reservation_time_out"));
 
-                    if (timeIn.before(timeOut)) {
+                    if (!timeIn.equals(timeOut) || timeIn.before(timeOut)) {
                         makeReservation(reservationInfo.get("application_type"), timeIn, timeOut, reservationInfo.get("license_plate"), reservationInfo.get("lot_id"), reservationInfo.get("spot_id"));
                     } else {
                         System.out.println("\nInvalid time in and time out. Try again.");
