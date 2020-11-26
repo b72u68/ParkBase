@@ -13,6 +13,7 @@ public class UserMenu {
     private Connection connection;
     private Scanner sc = new Scanner(System.in);
     private String userID;
+    private String type;
     private Date loginTime;
     private Date logoutTime;
     private HashMap<String, ArrayList<Integer>> lotAndSpot = new HashMap<String, ArrayList<Integer>>();
@@ -21,6 +22,7 @@ public class UserMenu {
         setConnection(connection);
         setUserID(userID);
         setLoginTime(loginTime);
+        getUserType();
     }
 
     public String getUserID() {
@@ -53,6 +55,19 @@ public class UserMenu {
     }
     */
 
+    public boolean isNumeric(String str) {
+        if (str == null || str.strip() == "") {
+            return false;
+        } else {
+            try {
+                Integer.parseInt(str);
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public void getLotAndSpot() {
         try {
             Statement st = connection.createStatement();
@@ -70,6 +85,35 @@ public class UserMenu {
                     lotAndSpot.put(lotId, tempSpotIds);
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getUserType() {
+        try {
+            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member NATURAL JOIN parking.user WHERE parking.member.user_id = ?", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            pst.setString(1, userID);
+            ResultSet rset = pst.executeQuery();
+
+            if (rset.next()) {
+                type = "member";
+            } else {
+                PreparedStatement pstUser = connection.prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?");
+                pstUser.setString(1, userID);
+                ResultSet userResult = pstUser.executeQuery();
+
+                if (userResult.next()) {
+                    type = "user";
+                } else {
+                    type = "employee";
+                }
+
+                userResult.close();
+                pstUser.close();
+            }
+            rset.close();
+            pst.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -110,14 +154,7 @@ public class UserMenu {
 
     public void viewProfileScreen() {
         try {
-            String type = "";
-
-            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member NATURAL JOIN parking.user WHERE parking.member.user_id = ?", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-            pst.setString(1, userID);
-            ResultSet rset = pst.executeQuery();
-
-            if (rset.next()) {
-                type = "member";
+            if (type == "member") {
                 PreparedStatement pstMember = connection.prepareStatement("SELECT * FROM parking.user NATURAL JOIN parking.member, parking.parking_lot WHERE parking.member.user_id = ? AND parking.member.lot_id = parking.parking_lot.lot_id");
                 pstMember.setString(1, userID);
                 ResultSet memberResult = pstMember.executeQuery();
@@ -128,15 +165,9 @@ public class UserMenu {
 
                 memberResult.close();
                 pstMember.close();
-            } else {
-                PreparedStatement pstTemp = connection.prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?");
-                pstTemp.setString(1, userID);
-                ResultSet tempResult = pstTemp.executeQuery();
-                
-                if (tempResult.next()) {
-                    type = "user";
+            } else if (type == "user") {
                     PreparedStatement pstUser = connection.prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?");
-                    pstTemp.setString(1, userID);
+                    pstUser.setString(1, userID);
                     ResultSet userResult = pstUser.executeQuery();
                     
                     if (userResult.next()) {
@@ -145,29 +176,18 @@ public class UserMenu {
 
                     userResult.close();
                     pstUser.close();
-                } else {
-                    type = "employee";
+                } else if (type == "employee") {
                     PreparedStatement pstEmployee = connection.prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?");
                     pstEmployee.setString(1, userID);
                     ResultSet employeeResult = pstEmployee.executeQuery();
 
-                    System.out.println(String.format("Name: %s", employeeResult.getString("name")));
-                    System.out.println(String.format("Password: %s", employeeResult.getString("password")));
-                    System.out.println(String.format("Type: %s", employeeResult.getString("type")));
-                    System.out.println(String.format("Salary: %f", employeeResult.getDouble("salary")));
-
-                    //printUserProfile(employeeResult, type);
+                    if (employeeResult.next()) {
+                        printUserProfile(employeeResult, type);
+                    }
 
                     pstEmployee.close();
                     employeeResult.close();
                 }
-                
-                tempResult.close();
-                pstTemp.close();
-            }
-            
-            rset.close();
-            pst.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -196,19 +216,4 @@ public class UserMenu {
     public void updateProfileScreen() {}
     public void makeReservationScreen() {}
     public void logout() {}
-
-    public boolean isNumeric(String str) {
-        if (str == null || str.strip() == "") {
-            return false;
-        } else {
-            try {
-                Integer.parseInt(str);
-            } catch (NumberFormatException e) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public void viewProfileMenu() {}
 }
