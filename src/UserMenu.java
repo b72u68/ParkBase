@@ -6,6 +6,7 @@ import java.util.Scanner;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -23,6 +24,7 @@ public class UserMenu {
         setUserID(userID);
         setLoginTime(loginTime);
         getUserType();
+        getLotAndSpot();
     }
 
     public String getUserID() {
@@ -78,11 +80,13 @@ public class UserMenu {
                 String lotId = rset.getString(2);
 
                 if (lotAndSpot.get(lotId) == null) {
-                    lotAndSpot.put(lotId, new ArrayList<Integer>());
+                    ArrayList<Integer> temp = new ArrayList<Integer>();
+                    temp.add(spotId);
+                    lotAndSpot.put(lotId, temp);
                 } else {
-                    ArrayList<Integer> tempSpotIds = lotAndSpot.get(lotId);
-                    tempSpotIds.add(spotId);
-                    lotAndSpot.put(lotId, tempSpotIds);
+                    ArrayList<Integer> temp = lotAndSpot.get(lotId);
+                    temp.add(spotId);
+                    lotAndSpot.put(lotId, temp);
                 }
             }
         } catch (Exception e) {
@@ -147,7 +151,7 @@ public class UserMenu {
                     exit = true;
                     break;
                 default:
-                    System.out.println("Invalid option. Try again.");
+                    System.out.println("\nInvalid option. Try again.");
             }
         }
     }
@@ -213,7 +217,157 @@ public class UserMenu {
         }
     }
 
-    public void updateProfileScreen() {}
+    public String updateProfileOptions() {
+        System.out.println("\nUpdate Profile");
+        System.out.println("1. Name\n2. Password");
+
+        if (type == "member") {
+            System.out.println("3. Lot\n4. Spot\n5. Exit");
+        }
+
+        System.out.print("Enter option here: ");
+        String option = sc.nextLine();
+        return option;
+    }
+
+    public String getNewValue() {
+        System.out.print("Enter new value here: ");
+        String newValue = sc.nextLine();
+        return newValue;
+    }
+
+    public void updateProfileScreen() {
+        boolean exit = false;
+
+        while (!exit) {
+            String option = updateProfileOptions();
+            boolean isValid = false;
+
+            switch (option) {
+                case "1":
+                    while (!isValid) {
+                        String value = getNewValue();
+                        if (value.length() <= 30) {
+                            makeProfileUpdate("name", value);
+                            isValid = true;
+                        } else {
+                            System.out.println("\nInvalid input. Try again.");
+                        }
+                    }
+                    break;
+                case "2":
+                    while (!isValid) {
+                        String value = getNewValue();
+                        if (value.length() <= 20) {
+                            makeProfileUpdate("password", value);
+                            isValid = true;
+                        } else {
+                            System.out.println("\nInvalid input. Try again.");
+                        }
+                    }
+                    break;
+                case "3":
+                    while (!isValid) {
+                        String value = getNewValue();
+                        if (value.length() == 1 && lotAndSpot.keySet().contains(value)) {
+                            makeProfileUpdate("lot_id", value);
+                            isValid = true;
+                        } else {
+                            System.out.println("\nInvalid input. Try again.");
+                        }
+                    }
+                    break;
+                case "4":
+                    if (type == "member") {
+                        while (!isValid) {
+                            String value = getNewValue();
+                            String lotId = "";
+                            try {
+                                PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?");
+                                pst.setString(1, userID);
+                                ResultSet rset = pst.executeQuery();
+
+                                if (rset.next()) {
+                                    lotId = rset.getString("lot_id");
+                                }
+                                
+                                rset.close();
+                                pst.close();
+
+                                if (isNumeric(value)) {
+                                    if (lotAndSpot.get(lotId).contains(Integer.parseInt(value))) {
+                                        makeProfileUpdate("spot_id", value);
+                                        isValid = true;
+                                    } else {
+                                        System.out.println("\nInvalid input. Try again.");
+                                    }
+                                } else {
+                                    System.out.println("\nInvalid input. Try again.");
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } else {
+                        System.out.println("\nInvalid option. Try again.");
+                    }
+                    break;
+                case "5":
+                    exit = true;
+                    break;
+                default:
+                    System.out.println("\nInvalid option. Try again.");
+            }
+        }
+    }
+    
+    public void makeProfileUpdate(String updateField, String newValue) {
+        if (updateField == "name" || updateField == "password") {
+            try {
+                PreparedStatement pst = connection.prepareStatement(String.format("UPDATE parking.user SET %s = ? WHERE user_id = ?", updateField));
+                pst.setString(1, newValue);
+                pst.setString(2, userID);
+                pst.executeUpdate();
+
+                System.out.println("Update Profile successfully.");
+
+                pst.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                PreparedStatement pst = connection.prepareStatement(String.format("UPDATE parking.member SET %s = ? WHERE user_id = ?", updateField));
+                if (updateField == "spot_id") {
+                    pst.setInt(1, Integer.parseInt(newValue));
+                } else {
+                    pst.setString(1, newValue);
+                }
+                pst.setString(2, userID);
+                pst.executeUpdate();
+
+                System.out.println("Update Profile successfully.");
+
+                pst.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void makeReservationScreen() {}
-    public void logout() {}
+
+    public void logout() {
+        try {
+            PreparedStatement pst = connection.prepareStatement("UPDATE parking.user SET login_time = ?, logout_time = ? WHERE user_id = ?");
+            pst.setTimestamp(1, new Timestamp(loginTime.getTime()));
+            pst.setTimestamp(2, new Timestamp(new Date().getTime()));
+            pst.setString(3, userID);
+            pst.executeUpdate();
+
+            System.out.println("\nLogging out...");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
