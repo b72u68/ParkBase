@@ -161,7 +161,7 @@ public class UserMenu {
                     viewProfileScreen();
                     break;
                 case "2":
-                    updateProfileScreen();
+                    makeProfileUpdateRequestScreen();
                     break;
                 case "3":
                     makeReservationScreen();
@@ -237,7 +237,7 @@ public class UserMenu {
         }
     }
 
-    public String updateProfileOptions() {
+    public String profileUpdateRequestOptions() {
         System.out.println("\nUpdate Profile");
         System.out.println("1. Name\n2. Password");
 
@@ -256,11 +256,11 @@ public class UserMenu {
         return newValue;
     }
 
-    public void updateProfileScreen() {
+    public void makeProfileUpdateRequestScreen() {
         boolean exit = false;
 
         while (!exit) {
-            String option = updateProfileOptions();
+            String option = profileUpdateRequestOptions();
             boolean isValid = false;
 
             switch (option) {
@@ -268,7 +268,7 @@ public class UserMenu {
                     while (!isValid) {
                         String value = getNewValue();
                         if (value.length() <= 30) {
-                            makeProfileUpdate("name", value);
+                            makeProfileUpdateRequest("name", value);
                             isValid = true;
                         } else {
                             System.out.println("\nInvalid input (name has to have less than 30 characters). Try again.");
@@ -279,7 +279,7 @@ public class UserMenu {
                     while (!isValid) {
                         String value = getNewValue();
                         if (value.length() <= 20) {
-                            makeProfileUpdate("password", value);
+                            makeProfileUpdateRequest("password", value);
                             isValid = true;
                         } else {
                             System.out.println("\nInvalid input (password has to have less than 20 characters). Try again.");
@@ -292,7 +292,7 @@ public class UserMenu {
                             String value = getNewValue();
                             boolean isValidLot = isValidLot(value);
                             if (isValidLot) {
-                                makeProfileUpdate("lot_id", value);
+                                makeProfileUpdateRequest("lot_id", value);
                                 isValid = true;
                             } else {
                                 System.out.println("\nInvalid input (unavailable or invalid lot). Try again.");
@@ -321,7 +321,7 @@ public class UserMenu {
 
                                 boolean isValidSpot = isValidSpot(lotId, value);
                                 if (isValidSpot) {
-                                    makeProfileUpdate("spot_id", value);
+                                    makeProfileUpdateRequest("spot_id", value);
                                     isValid = true;
                                 } else {
                                     System.out.println("\nInvalid input (unavailable or invalid spot). Try again.");
@@ -344,37 +344,24 @@ public class UserMenu {
         }
     }
     
-    public void makeProfileUpdate(String updateField, String newValue) {
-        if (updateField.equals("name") || updateField.equals("password")) {
-            try {
-                PreparedStatement pst = connection.prepareStatement(String.format("UPDATE parking.user SET %s = ? WHERE user_id = ?", updateField));
-                pst.setString(1, newValue);
-                pst.setString(2, userID);
-                pst.executeUpdate();
-
-                System.out.println("Update profile successfully.");
-
-                pst.close();
-            } catch (Exception e) {
-                e.printStackTrace();
+    public void makeProfileUpdateRequest(String updateField, String newValue) {
+        try {
+            PreparedStatement pst = connection.prepareStatement(String.format("INSERT INTO parking.update_form VALUES (?,?,?,?)", updateField));
+            pst.setString(1, userID);
+            pst.setTimestamp(2, new Timestamp(new Date().getTime()));
+            pst.setString(3, updateField);
+            if (updateField.equals("spot_id")) {
+                pst.setInt(4, Integer.parseInt(newValue));
+            } else {
+                pst.setString(4, newValue);
             }
-        } else {
-            try {
-                PreparedStatement pst = connection.prepareStatement(String.format("UPDATE parking.member SET %s = ? WHERE user_id = ?", updateField));
-                if (updateField.equals("spot_id")) {
-                    pst.setInt(1, Integer.parseInt(newValue));
-                } else {
-                    pst.setString(1, newValue);
-                }
-                pst.setString(2, userID);
-                pst.executeUpdate();
+            pst.executeUpdate();
 
-                System.out.println("Update profile successfully.");
+            System.out.println("Make profile update request successfully.");
 
-                pst.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            pst.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
