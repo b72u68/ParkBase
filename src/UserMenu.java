@@ -581,6 +581,9 @@ public class UserMenu {
             pst.executeUpdate();
 
             System.out.println("\nLogging out...");
+
+            pst.close();
+            sc.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
