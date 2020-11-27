@@ -50,7 +50,7 @@ public class UserMenu {
     }
 
     public boolean isNumeric(String str) {
-        if (str == null || str.strip() == "") {
+        if (str == null || str.strip().equals("")) {
             return false;
         } else {
             try {
@@ -178,7 +178,7 @@ public class UserMenu {
 
     public void viewProfileScreen() {
         try {
-            if (type == "member") {
+            if (type.equals("member")) {
                 PreparedStatement pstMember = connection.prepareStatement("SELECT * FROM parking.user NATURAL JOIN parking.member, parking.parking_lot WHERE parking.member.user_id = ? AND parking.member.lot_id = parking.parking_lot.lot_id");
                 pstMember.setString(1, userID);
                 ResultSet memberResult = pstMember.executeQuery();
@@ -189,7 +189,7 @@ public class UserMenu {
 
                 memberResult.close();
                 pstMember.close();
-            } else if (type == "user") {
+            } else if (type.equals("user")) {
                     PreparedStatement pstUser = connection.prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?");
                     pstUser.setString(1, userID);
                     ResultSet userResult = pstUser.executeQuery();
@@ -200,7 +200,7 @@ public class UserMenu {
 
                     userResult.close();
                     pstUser.close();
-                } else if (type == "employee") {
+                } else if (type.equals("employee")) {
                     PreparedStatement pstEmployee = connection.prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?");
                     pstEmployee.setString(1, userID);
                     ResultSet employeeResult = pstEmployee.executeQuery();
@@ -223,12 +223,12 @@ public class UserMenu {
             System.out.println(String.format("Name: %s", rset.getString("name")));
             System.out.println(String.format("Password: %s", rset.getString("password")));
 
-            if (type == "member") {
+            if (type.equals("member")) {
                 System.out.println(String.format("Registered license plate: %s", rset.getString("registered_license_plate")));
                 System.out.println(String.format("Registered lot: %s", rset.getString("lot_id")));
                 System.out.println(String.format("Registered spot: %d", rset.getInt("spot_id")));
                 System.out.println(String.format("Membership fee: %f", rset.getDouble("membership_fee")));
-            } else if (type == "employee") {
+            } else if (type.equals("employee")) {
                 System.out.println(String.format("Type: %s", rset.getString("type")));
                 System.out.println(String.format("Salary: %f", rset.getDouble("salary")));
             }
@@ -241,7 +241,7 @@ public class UserMenu {
         System.out.println("\nUpdate Profile");
         System.out.println("1. Name\n2. Password");
 
-        if (type == "member") {
+        if (type.equals("member")) {
             System.out.println("3. Lot\n4. Spot\n5. Exit");
         }
 
@@ -287,7 +287,7 @@ public class UserMenu {
                     }
                     break;
                 case "3":
-                    if (type == "member") {
+                    if (type.equals("member")) {
                         while (!isValid) {
                             String value = getNewValue();
                             boolean isValidLot = isValidLot(value);
@@ -303,7 +303,7 @@ public class UserMenu {
                     }
                     break;
                 case "4":
-                    if (type == "member") {
+                    if (type.equals("member")) {
                         while (!isValid) {
                             String value = getNewValue();
                             String lotId = "";
@@ -345,7 +345,7 @@ public class UserMenu {
     }
     
     public void makeProfileUpdate(String updateField, String newValue) {
-        if (updateField == "name" || updateField == "password") {
+        if (updateField.equals("name") || updateField.equals("password")) {
             try {
                 PreparedStatement pst = connection.prepareStatement(String.format("UPDATE parking.user SET %s = ? WHERE user_id = ?", updateField));
                 pst.setString(1, newValue);
@@ -361,7 +361,7 @@ public class UserMenu {
         } else {
             try {
                 PreparedStatement pst = connection.prepareStatement(String.format("UPDATE parking.member SET %s = ? WHERE user_id = ?", updateField));
-                if (updateField == "spot_id") {
+                if (updateField.equals("spot_id")) {
                     pst.setInt(1, Integer.parseInt(newValue));
                 } else {
                     pst.setString(1, newValue);
