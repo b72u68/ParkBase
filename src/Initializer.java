@@ -92,7 +92,7 @@ public class Initializer extends JFrame {
 		            //to test UserMenu, uncomment the following two statements and comment out "new Login...;" above
 		            
 		            UserMenu userMenu = new UserMenu(getConnection(), "7463462", new Date());
-		            userMenu.UserMenuScreen();
+		            //userMenu.UserMenuScreen();
 
 				} catch (FileNotFoundException ex) {
 					System.out.println("Error: could not find file.");

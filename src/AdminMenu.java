@@ -15,6 +15,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Vector;
@@ -36,18 +37,18 @@ public class AdminMenu extends JFrame {
 	private String dbName;
 	private String dbUsername;
 	private String dbPassword;
+	private String UName;
 	protected Connection connection;
 	
-	public AdminMenu(String dbName, String dbUsername, String dbPassword) {
+	public AdminMenu(String dbName, String dbUsername, String dbPassword, String UName) {
 	//public AdminMenu(Connection con) {
 		
 		super("Admin Menu");
-		
 		setSize(450, 270);
 		setLayout(new GridLayout(5, 2));
 		setLocationRelativeTo(null);
 		
-		setConnection(dbName, dbUsername, dbPassword);
+		setConnection(dbName, dbUsername, dbPassword, UName);
 		//buttons
 		JButton btnPr = new JButton("View Profile");
 		JButton btnMR = new JButton("Make Reservation");
@@ -111,8 +112,10 @@ public class AdminMenu extends JFrame {
 		btnMR.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				
+				UserMenu um = new UserMenu(getConnection(), getUName(), new Date());
+				um.makeReservationScreen();
 			}
+			
 		});
 		btnAR.addActionListener(new ActionListener() {
 			@Override
@@ -411,34 +414,6 @@ public class AdminMenu extends JFrame {
 		setVisible(true);
 	}
 	
-	private void setConnection(String dbName, String dbUsername, String dbPassword) {
-		this.dbName = dbName;
-		this.dbUsername = dbUsername;
-		this.dbPassword = dbPassword;
-	}
-	
-	private Connection getConnection() {
-		try {
-			url = "jdbc:postgresql://localhost:5432/";
-			url.concat(this.dbName);
-			connection = DriverManager.getConnection(url, this.dbUsername, this.dbPassword);
-		} catch (SQLException ex) {
-			System.out.println("Error: could not set connection");
-			ex.printStackTrace();
-		}
-		return connection;
-	}
-	
-	public String getdbName() {
-		return this.dbName;
-	}
-	public String getdbUsername() {
-		return this.dbUsername;
-	}
-	public String getdbPassword() {
-		return this.dbPassword;
-	}
-	
 	public void update_confirmation_form(JFrame frame, String table, String userID) {
 		
 		String sqlTable = "parking." + table;
@@ -500,4 +475,38 @@ public class AdminMenu extends JFrame {
 		});
 	}
 
+
+	
+	private void setConnection(String dbName, String dbUsername, String dbPassword, String UName) {
+		this.dbName = dbName;
+		this.dbUsername = dbUsername;
+		this.dbPassword = dbPassword;
+		this.UName = UName;
+	}
+	
+	private Connection getConnection() {
+		try {
+			url = "jdbc:postgresql://localhost:5432/";
+			url.concat(this.dbName);
+			connection = DriverManager.getConnection(url, this.dbUsername, this.dbPassword);
+		} catch (SQLException ex) {
+			System.out.println("Error: could not set connection");
+			ex.printStackTrace();
+		}
+		return connection;
+	}
+	
+	public String getdbName() {
+		return this.dbName;
+	}
+	public String getdbUsername() {
+		return this.dbUsername;
+	}
+	public String getdbPassword() {
+		return this.dbPassword;
+	}
+	public String getUName() {
+		return this.UName;
+	}
+	
 }

@@ -220,13 +220,14 @@ public class MockData {
 	}
 	
 	public void insertAdminData () {
+		DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS");
         File adminFile = new File("data/admin.csv");
 		try {
 			Scanner adminData = new Scanner(adminFile);
             adminData.nextLine();
 
             while (adminData.hasNextLine()) {
-                PreparedStatement pStmt = connection.prepareStatement("insert into parking.admin (admin_id, name, password) values (?,?,?)");
+                PreparedStatement pStmt = connection.prepareStatement("insert into parking.admin (admin_id, name, password, login_time, logout_time) values (?,?,?,?,?)");
 
                 String data = adminData.nextLine();
                 String[] dataList = data.split(",");
@@ -234,11 +235,29 @@ public class MockData {
                 String adminID = dataList[0];
                 String name = dataList[1];
                 String password = dataList[2];
+                Timestamp loginTime = null;
+                Timestamp logoutTime = null;
+				try {
+					loginTime = new Timestamp(format.parse(dataList[3]).getTime());
+					logoutTime = new Timestamp(format.parse(dataList[4]).getTime());
+				} catch (ParseException e) {
+					System.out.println("Error: could not read time");
+					e.printStackTrace();
+				}
 
                 pStmt.setString(1, adminID);
                 pStmt.setString(2, name);
                 pStmt.setString(3, password);
-
+                pStmt.setTimestamp(4, loginTime);
+                pStmt.setTimestamp(5, logoutTime);
+                pStmt.executeUpdate();
+                
+                pStmt = connection.prepareStatement("insert into parking.user (user_id, name, password, login_time, logout_time) values (?,?,?,?,?)");
+                pStmt.setString(1, adminID);
+                pStmt.setString(2, name);
+                pStmt.setString(3, password);
+                pStmt.setTimestamp(4, loginTime);
+                pStmt.setTimestamp(5, logoutTime);
                 pStmt.executeUpdate();
             }
 

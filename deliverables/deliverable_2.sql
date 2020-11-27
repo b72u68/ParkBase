@@ -89,7 +89,9 @@ create table parking.employee (
 create table parking.admin (
 	admin_id char(7) not null,
 	name varchar(30) not null,
-	password varchar(20) not null
+	password varchar(20) not null,
+	login_time timestamp,
+	logout_time timestamp
 );
 
 /* TODO: Add remain_time() attribute */
@@ -134,13 +136,6 @@ create view parking.booking as
 	from parking.reservation;
 
 -- for showing table of available spots on listed days
---create view parking.reserved_days as
---	select date_part('year', reservation_time_in) as start_year, date_part('month', reservation_time_in) as start_month, date_part('day', reservation_time_in) as start_day,
---	date_part('year', reservation_time_out) as end_year, date_part('month', reservation_time_out) as end_month, date_part('day', reservation_time_out) as end_day
---	from parking.reservation;
---drop view parking.reserved_days;
---    the following 4 tables are for running a report
---   member_pay and guest_pay will be combined to check the total revenue
 
 create view parking.member_pay as
 	select lot_id, start_month, end_month, mem_count*membership_fee-upkeep_cost as mem_profit		

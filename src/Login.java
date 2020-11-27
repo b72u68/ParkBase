@@ -60,7 +60,7 @@ public class Login extends JFrame{
 		btnSubm.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String query = "SELECT * FROM parking.user WHERE parking.user.user_id = ? AND parking.user.password = ?;";
+				String query = "SELECT * FROM parking.admin WHERE parking.admin.admin_id = ? AND parking.admin.password = ?;";
 				try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
 					stmt.setString(1, txtUname.getText());
 					stmt.setString(2, txtPassword.getText());
@@ -68,41 +68,44 @@ public class Login extends JFrame{
 					if (rs.next()) {
 						setVisible(false); // HIDE THE FRAME
 						dispose(); // CLOSE OUT THE WINDOW
-						UserMenu userMenu = new UserMenu(getConnection(), "7463462", new Date());
-			            //userMenu.requestUpdate();
-					} else
-						lblStatus.setText("User not found");
+						AdminMenu aMenu = new AdminMenu(getdbName(), getdbUsername(), getdbPassword(), txtUname.getText());
+					} else {
+
+						query = "SELECT * FROM parking.employee WHERE parking.employee.employee_id = ? AND parking.employee.password = ?;";
+						try (PreparedStatement stmt1 = getConnection().prepareStatement(query)) {
+							stmt1.setString(1, txtUname.getText());
+							stmt1.setString(2, txtPassword.getText());
+							ResultSet rs1 = stmt.executeQuery();
+							if (rs1.next()) {
+								setVisible(false); // HIDE THE FRAME
+								dispose(); // CLOSE OUT THE WINDOW
+								//Employee Menu
+							} else
+								lblStatus.setText("Employee not found");
+						} catch (SQLException ex) {
+							ex.printStackTrace();
+						}
+
+						query = "SELECT * FROM parking.user WHERE parking.user.user_id = ? AND parking.user.password = ?;";
+						try (PreparedStatement stmt2 = getConnection().prepareStatement(query)) {
+							stmt2.setString(1, txtUname.getText());
+							stmt2.setString(2, txtPassword.getText());
+							ResultSet rs2 = stmt.executeQuery();
+							if (rs2.next()) {
+								setVisible(false); // HIDE THE FRAME
+								dispose(); // CLOSE OUT THE WINDOW
+								UserMenu userMenu = new UserMenu(getConnection(), "7463462", new Date());
+					            //userMenu.requestUpdate();
+							} else
+								lblStatus.setText("User not found");
+						} catch (SQLException ex) {
+							ex.printStackTrace();
+						}
+					}
 				} catch (SQLException ex) {
 					ex.printStackTrace();
 				}
-				query = "SELECT * FROM parking.employee WHERE parking.employee.employee_id = ? AND parking.employee.password = ?;";
-				try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
-					stmt.setString(1, txtUname.getText());
-					stmt.setString(2, txtPassword.getText());
-					ResultSet rs = stmt.executeQuery();
-					if (rs.next()) {
-						setVisible(false); // HIDE THE FRAME
-						dispose(); // CLOSE OUT THE WINDOW
-						//Employee Menu
-					} else
-						lblStatus.setText("Employee not found");
-				} catch (SQLException ex) {
-					ex.printStackTrace();
-				}
-				query = "SELECT * FROM parking.admin WHERE parking.admin.admin_id = ? AND parking.admin.password = ?;";
-				try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
-					stmt.setString(1, txtUname.getText());
-					stmt.setString(2, txtPassword.getText());
-					ResultSet rs = stmt.executeQuery();
-					if (rs.next()) {
-						setVisible(false); // HIDE THE FRAME
-						dispose(); // CLOSE OUT THE WINDOW
-						AdminMenu aMenu = new AdminMenu(getdbName(), getdbUsername(), getdbPassword());
-					} else
-						lblStatus.setText("Admin not found");
-				} catch (SQLException ex) {
-					ex.printStackTrace();
-				}
+				
 			}	
 		});
 		
