@@ -11,8 +11,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -25,13 +23,13 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 
+@SuppressWarnings("serial")
 public class AdminMenu extends JFrame {
 	protected String url;
 	private String dbName;
@@ -41,7 +39,6 @@ public class AdminMenu extends JFrame {
 	protected Connection connection;
 	
 	public AdminMenu(String dbName, String dbUsername, String dbPassword, String UName) {
-	//public AdminMenu(Connection con) {
 		
 		super("Admin Menu");
 		setSize(450, 270);
@@ -70,13 +67,15 @@ public class AdminMenu extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					JFrame f = new JFrame();
-					f.setSize(400,200);
+					
+					//gets user ID
 					String userID = JOptionPane.showInputDialog(null, "Enter user ID");
 					PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM parking.member NATURAL JOIN parking.user WHERE parking.member.user_id = ?;",
 							ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 					pst.setString(1, userID);
 					ResultSet profile = pst.executeQuery();
+					
+					//checks what tables the user is in
 					if (!profile.next()) {
 						pst = getConnection().prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?;",
 								ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
@@ -99,6 +98,9 @@ public class AdminMenu extends JFrame {
 					}
 					profile.previous();
 					
+					//builds the table output
+					JFrame f = new JFrame();
+					f.setSize(400,200);
 					JTable jt = new JTable(profileJTable.buildTableModel(profile));
 					jt.setBounds(30, 40, 200, 400);
 					JScrollPane sp = new JScrollPane(jt);
@@ -112,6 +114,7 @@ public class AdminMenu extends JFrame {
 		btnMR.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				//makes an instance of the user menu to activate the reservation screen
 				UserMenu um = new UserMenu(getConnection(), getUName(), new Date());
 				um.makeReservationScreen();
 			}
@@ -127,9 +130,12 @@ public class AdminMenu extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
+					
+					//Pulls all the profile update requests
 					Statement stm = getConnection().createStatement();
 					ResultSet updates = stm.executeQuery("SELECT * FROM parking.update_form");
 
+					//Builds the window, with the profile update requests in the middle, the button to confirm an update on top, and the button to close a user's requests on the bottom
 					JFrame subf = new JFrame();
 					Container contentPane = subf.getContentPane();
 					contentPane.setLayout(new BorderLayout());
@@ -143,48 +149,58 @@ public class AdminMenu extends JFrame {
 					contentPane.add(btnU, BorderLayout.NORTH);
 					contentPane.add(btnC, BorderLayout.SOUTH);
 					
+					//update button
 					btnU.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							try {
-								JFrame UpFrame = new JFrame();
-								UpFrame.setSize(400,200);
+								
+								//gets User id
 								String userID = JOptionPane.showInputDialog(null, "Enter user ID");
+								
+								//searches the user table for the user
 								PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM parking.user WHERE parking.user.user_id = ?;",
 									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 								pst.setString(1, userID);
 								ResultSet profile = pst.executeQuery();
 								pst.close();
+								
+								//Initializes result window
+								JFrame UpFrame = new JFrame();
+								UpFrame.setSize(400,200);
+								
 								if (profile.next()) {
-									pst = getConnection().prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?;",
-											ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-									pst.setString(1, userID);
-									profile = pst.executeQuery();
-									if (profile.next()) {
-										update_confirmation_form(UpFrame, "member", userID);		//current user is a member
-									} else {
-										update_confirmation_form(UpFrame, "user", userID);			//current user is just a user
-									}
-									pst.close();
-								} else {
-									pst = getConnection().prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?;",
-											ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-									pst.setString(1, userID);
-									profile = pst.executeQuery();
-									if (profile.next()) {
-										profile.previous();
-										update_confirmation_form(UpFrame, "user", userID);
-									} else {
-										pst = getConnection().prepareStatement("SELECT * FROM parking.admin WHERE parking.admin.admin_id = ?;",
-												ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-										pst.setString(1, userID);
-										profile = pst.executeQuery();
-										if (profile.next()) {
-											profile.previous();
-											update_confirmation_form(UpFrame, "user", userID);
-										}
-									}
-									pst.close();
+									update_confirmation_form(UpFrame, "user", userID);		//current user is in user table
 								}
+								//search the member table to see if they are a member
+								pst = getConnection().prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?;",
+											ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+								pst.setString(1, userID);
+								profile = pst.executeQuery();
+								pst.close();
+									
+								if (profile.next()) {
+									update_confirmation_form(UpFrame, "member", userID);		//current user is a member
+								} 
+								//search the admin table to see if they are an admin
+								pst = getConnection().prepareStatement("SELECT * FROM parking.admin WHERE parking.admin.admin_id = ?;",
+												ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+								pst.setString(1, userID);
+								profile = pst.executeQuery();
+								pst.close();
+								if (profile.next()) {
+									update_confirmation_form(UpFrame, "admin", userID);
+								}
+								//search the employee table to see if they are an employee
+								pst = getConnection().prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?;",
+												ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+								pst.setString(1, userID);
+								profile = pst.executeQuery();
+								pst.close();
+								if (profile.next()) {
+									update_confirmation_form(UpFrame, "employee", userID);
+								}
+								
+								//display window
 								UpFrame.setVisible(true);
 							} catch (SQLException ex) {
 								System.out.println("Error: could not update profile.");
@@ -192,15 +208,20 @@ public class AdminMenu extends JFrame {
 							}			
 						} 
 					}); 
+					
+					//close (drop) button
 					btnC.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							try {
+								
+								//create confirmation popup
 								String userID = JOptionPane.showInputDialog(null, "Delete all update requests from this user ID");
 								PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM parking.update_form WHERE parking.update_form.user_id = ?;",
 									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 								pst.setString(1, userID);
 								ResultSet profile = pst.executeQuery();
 								
+								//if the profile is found, delete all update_form entries associated with that id
 								if (profile.next()) {
 									pst = getConnection().prepareStatement("DELETE FROM parking.update_form WHERE parking.update_form.user_id = ?;");
 									pst.setString(1, userID);
@@ -234,6 +255,7 @@ public class AdminMenu extends JFrame {
 					}
 					System.out.println("Retrieved all reservation start and end dates.");
 					ArrayList<Timestamp> ctDayArray = new ArrayList<Timestamp>();
+					
 					//gets a list of all days between start and end dates
 					for (int i=0; i<timeDaysArray.size(); i++) {
 						Timestamp ts = timeDaysArray.get(i)[0];
@@ -254,6 +276,7 @@ public class AdminMenu extends JFrame {
 
 						}
 					}
+					
 					//get a table of all spots available at each hour
 					System.out.println("Retrieved all intermediate dates.");
 					Vector<String> columnNames = new Vector<String>();
@@ -264,9 +287,11 @@ public class AdminMenu extends JFrame {
 					}
 					Vector<Vector<ArrayList<String>>> data = new Vector<Vector<ArrayList<String>>>();
 					
+					//rows are hour timeslots
 					for (int hour=0; hour<24; hour++) {
 						data.add(new Vector<ArrayList<String>>());
 						
+						//columns are days with reservations on them
 						for (int i=0; i<ctDayArray.size()+1; i++) {
 							
 							data.get(hour).add(new ArrayList<String>());
@@ -275,6 +300,7 @@ public class AdminMenu extends JFrame {
 							} else {
 								try {
 									Statement statement = getConnection().createStatement();
+									
 									//select all the spots that are not in the set of spots with in times before the iterative day and with out times after the iterative day
 									ResultSet freeSpots = statement.executeQuery("SELECT lot_id, spot_id FROM parking.spot"
 										+ " WHERE NOT EXISTS ("
@@ -301,10 +327,10 @@ public class AdminMenu extends JFrame {
 							} 
 						}
 					}
-					JFrame report = new JFrame();
+					JFrame report = new JFrame("Spot Calendar Report");
+					
 					report.setSize(500,500);
 					JTable spot_calendar = new JTable(data, columnNames);
-					//spot_calendar.setBounds(30, 40, 200, 400);
 					spot_calendar.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 					JScrollPane sp = new JScrollPane(spot_calendar, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 					report.add(sp);
@@ -317,15 +343,12 @@ public class AdminMenu extends JFrame {
 					ResultSet lot_ratios = stm.executeQuery("SELECT * FROM parking.lot_ratios;");
 					ResultSet times = stm.executeQuery("SELECT * FROM parking.times;");
 					
-					JFrame reportPay = new JFrame();
+					JFrame reportPay = new JFrame("Report Cont.");
 					reportPay.setSize(500,500);
 					JPanel mainPanel = new JPanel();
 					mainPanel.setLayout(new GridLayout(6, 1));
 					reportPay.add(mainPanel);
 					
-
-					ResultSetMetaData metaData = member_pay.getMetaData();
-					int numCol = metaData.getColumnCount();
 					Map<String,double[]> months = new Hashtable<String,double[]>();
 					while(member_pay.next()) {
 						months.putIfAbsent(member_pay.getString(1), new double[12]);
@@ -335,18 +358,18 @@ public class AdminMenu extends JFrame {
 					}
 					//for every key in months, make a frame element that shows every month and the revenue corresponding with that month
 					for (String key : months.keySet()) {
-						JPanel jp = new JPanel();
+						
 						String[][] monthsArray = new String[1][13];
 						monthsArray[0][0] = key;
 						for (int i=1; i<13; i++) {
 							monthsArray[0][i] = String.valueOf(months.get(key)[i-1]);
 						}
+						JPanel jp = new JPanel();
+						jp.setSize(100, 20);
 						JTable memTable = new JTable(monthsArray, new String[]{"MEMBER", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"});
 						jp.add(new JScrollPane(memTable));
 						mainPanel.add(jp);
 					}
-					metaData = guest_pay.getMetaData();
-					numCol = metaData.getColumnCount();
 					months.clear();
 					
 					
@@ -356,6 +379,7 @@ public class AdminMenu extends JFrame {
 							months.get(guest_pay.getString(1))[i-1] += guest_pay.getDouble(4);
 						}
 					}
+					
 					//for every key in months, make a frame element that shows every month and the revenue corresponding with that month
 					for (String key : months.keySet()) {
 						JPanel jp = new JPanel();
@@ -370,8 +394,6 @@ public class AdminMenu extends JFrame {
 					}
 					
 	
-					metaData = lot_ratios.getMetaData();
-					numCol = metaData.getColumnCount();
 					String[][] ratioArray = new String[months.size()][4];
 					int rowCount = 0;
 					while(lot_ratios.next()) {
@@ -416,12 +438,14 @@ public class AdminMenu extends JFrame {
 	
 	public void update_confirmation_form(JFrame frame, String table, String userID) {
 		
+		//set up sql formatting
 		String sqlTable = "parking." + table;
 		if (table.compareTo("member") == 0) {
 			table = "user";
 		}
 		String sqlCol = sqlTable + "." + table + "_id";
 		
+		//build window
 		frame.setSize(450, 270);
 		frame.setLayout(new GridLayout(5, 2));
 		
@@ -449,8 +473,12 @@ public class AdminMenu extends JFrame {
 		btnSubm.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
+					
+					//uses the identified field to update that column in the SQL table with the specified value
 					PreparedStatement pst = getConnection().prepareStatement("UPDATE " + sqlTable + " SET " + txtField.getText() + " = ? WHERE " + sqlCol + " = ?;",
 							ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+					
+					//anything other than the spot_id can be inserted as a string
 					if (txtField.getText().compareTo("spot_id") == 0) {
 						pst.setInt(1, Integer.parseInt(txtValue.getText()));
 					} else {
@@ -469,6 +497,8 @@ public class AdminMenu extends JFrame {
 		});
 		btnExit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				
+				//destroy window
 				frame.setVisible(false);
 				frame.dispose();
 			}
@@ -478,6 +508,8 @@ public class AdminMenu extends JFrame {
 
 	
 	private void setConnection(String dbName, String dbUsername, String dbPassword, String UName) {
+		
+		//set the variables for getConnection to initialize the connection with
 		this.dbName = dbName;
 		this.dbUsername = dbUsername;
 		this.dbPassword = dbPassword;
@@ -486,6 +518,8 @@ public class AdminMenu extends JFrame {
 	
 	private Connection getConnection() {
 		try {
+			
+			//initialize connection
 			url = "jdbc:postgresql://localhost:5432/";
 			url.concat(this.dbName);
 			connection = DriverManager.getConnection(url, this.dbUsername, this.dbPassword);
@@ -496,6 +530,7 @@ public class AdminMenu extends JFrame {
 		return connection;
 	}
 	
+	//getter methods in case you need any single private value. All private fields are set with "setConnection()"
 	public String getdbName() {
 		return this.dbName;
 	}
