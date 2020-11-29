@@ -87,12 +87,15 @@ public class Initializer extends JFrame {
 		            insertMockData(getConnection());
 		            setVisible(false);
 		            dispose();
-		            //new Login(txtDatabase.getText(), txtUname.getText(), txtPassword.getText());
+		            
+		            new Login(txtDatabase.getText(), txtUname.getText(), txtPassword.getText());
 		            
 		            //to test UserMenu, uncomment the following two statements and comment out "new Login...;" above
 		            
-		            UserMenu userMenu = new UserMenu(getConnection(), "7463462", new Date());
-		            userMenu.UserMenuScreen();
+		            //UserMenu userMenu = new UserMenu(getConnection(), "7463462", new Date());
+		            //userMenu.UserMenuScreen();
+		            
+		            //new StaffMenu(txtDatabase.getText(), txtUname.getText(), txtPassword.getText());
 
 				} catch (FileNotFoundException ex) {
 					System.out.println("Error: could not find file.");

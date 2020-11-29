@@ -62,20 +62,22 @@ public class Login extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				String query = "SELECT * FROM parking.admin WHERE parking.admin.admin_id = ? AND parking.admin.password = ?;";
 				try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
-					stmt.setString(1, txtUname.getText());
-					stmt.setString(2, txtPassword.getText());
+					String Uname = txtUname.getText();
+					String Pword = txtPassword.getText();
+					stmt.setString(1, Uname);
+					stmt.setString(2, Pword);
 					ResultSet rs = stmt.executeQuery();
 					if (rs.next()) {
 						setVisible(false); // HIDE THE FRAME
 						dispose(); // CLOSE OUT THE WINDOW
-						AdminMenu aMenu = new AdminMenu(getdbName(), getdbUsername(), getdbPassword(), txtUname.getText());
+						new AdminMenu(getdbName(), getdbUsername(), getdbPassword(), txtUname.getText());
 					} else {
 
 						query = "SELECT * FROM parking.employee WHERE parking.employee.employee_id = ? AND parking.employee.password = ?;";
 						try (PreparedStatement stmt1 = getConnection().prepareStatement(query)) {
-							stmt1.setString(1, txtUname.getText());
-							stmt1.setString(2, txtPassword.getText());
-							ResultSet rs1 = stmt.executeQuery();
+							stmt1.setString(1, Uname);
+							stmt1.setString(2, Pword);
+							ResultSet rs1 = stmt1.executeQuery();
 							if (rs1.next()) {
 								setVisible(false); // HIDE THE FRAME
 								dispose(); // CLOSE OUT THE WINDOW
@@ -88,9 +90,9 @@ public class Login extends JFrame{
 
 						query = "SELECT * FROM parking.user WHERE parking.user.user_id = ? AND parking.user.password = ?;";
 						try (PreparedStatement stmt2 = getConnection().prepareStatement(query)) {
-							stmt2.setString(1, txtUname.getText());
-							stmt2.setString(2, txtPassword.getText());
-							ResultSet rs2 = stmt.executeQuery();
+							stmt2.setString(1, Uname);
+							stmt2.setString(2, Pword);
+							ResultSet rs2 = stmt2.executeQuery();
 							if (rs2.next()) {
 								setVisible(false); // HIDE THE FRAME
 								dispose(); // CLOSE OUT THE WINDOW

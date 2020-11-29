@@ -14,10 +14,6 @@ import java.util.logging.Logger;
 public class MockData {
     private Connection connection;
 
-    public MockData() {
-        this.connection = null;
-    }
-
     public MockData(Connection connection) {
         this.connection = connection;
     }
@@ -292,7 +288,7 @@ public class MockData {
                 pStmt.close();
             }
 
-            System.out.println("Insert employee data successfully!");
+            System.out.println("Insert admin data successfully!");
             adminData.close();
 
         } catch (SQLException ex) {
