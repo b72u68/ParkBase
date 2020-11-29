@@ -54,8 +54,18 @@ public class MockData {
                 pStmt.setString(3, password);
                 pStmt.setTimestamp(4, loginTime);
                 pStmt.setTimestamp(5, logoutTime);
-
                 pStmt.executeUpdate();
+
+                pStmt = connection.prepareStatement("CREATE USER ?");
+                pStmt.setString(1, userID);
+                pStmt.executeUpdate();
+
+                pStmt = connection.prepareStatement("GRANT ? TO ?");
+                pStmt.setString(1, "r_user");
+                pStmt.setString(2, userID);
+                pStmt.executeUpdate();
+
+                pStmt.close();
             }
 
             System.out.println("Insert user data successfully!");
@@ -94,8 +104,14 @@ public class MockData {
                 pStmt.setString(2, plate);
                 pStmt.setString(3, lotID);
                 pStmt.setInt(4, spotID);
-
                 pStmt.executeUpdate();
+
+                pStmt = connection.prepareStatement("GRANT ? TO ?");
+                pStmt.setString(1, "member");
+                pStmt.setString(2, userID);
+                pStmt.executeUpdate();
+
+                pStmt.close();
             }
 
             System.out.println("Insert member data successfully!");
@@ -131,8 +147,9 @@ public class MockData {
                 pStmt.setDouble(2, guestFee);
                 pStmt.setDouble(3, membershipFee);
                 pStmt.setDouble(4, upkeepCost);
-
                 pStmt.executeUpdate();
+
+                pStmt.close();
             }
 
             System.out.println("Insert lot data successfully!");
@@ -166,6 +183,7 @@ public class MockData {
                 pStmt.setString(2, lotID);
 
                 pStmt.executeUpdate();
+                pStmt.close();
             }
 
             System.out.println("Insert spot data successfully!");
@@ -203,8 +221,18 @@ public class MockData {
                 pStmt.setString(3, password);
                 pStmt.setDouble(4, salary);
                 pStmt.setString(5, type);
-
                 pStmt.executeUpdate();
+
+                pStmt = connection.prepareStatement("CREATE USER ?");
+                pStmt.setString(1, employeeID);
+                pStmt.executeUpdate();
+
+                pStmt = connection.prepareStatement("GRANT ? TO ?");
+                pStmt.setString(1, "staff");
+                pStmt.setString(2, employeeID);
+                pStmt.executeUpdate();
+
+                pStmt.close();
             }
 
             System.out.println("Insert employee data successfully!");
@@ -252,13 +280,16 @@ public class MockData {
                 pStmt.setTimestamp(5, logoutTime);
                 pStmt.executeUpdate();
                 
-                pStmt = connection.prepareStatement("insert into parking.user (user_id, name, password, login_time, logout_time) values (?,?,?,?,?)");
+                pStmt = connection.prepareStatement("CREATE USER ?");
                 pStmt.setString(1, adminID);
-                pStmt.setString(2, name);
-                pStmt.setString(3, password);
-                pStmt.setTimestamp(4, loginTime);
-                pStmt.setTimestamp(5, logoutTime);
                 pStmt.executeUpdate();
+
+                pStmt = connection.prepareStatement("GRANT ? TO ?");
+                pStmt.setString(1, "admin");
+                pStmt.setString(2, adminID);
+                pStmt.executeUpdate();
+
+                pStmt.close();
             }
 
             System.out.println("Insert employee data successfully!");
@@ -295,6 +326,7 @@ public class MockData {
                 pStmt.setTimestamp(3, timeCreated);
 
                 pStmt.executeUpdate();
+                pStmt.close();
             }
 
             System.out.println("Insert temporary license plate data successfully!");
@@ -336,6 +368,7 @@ public class MockData {
                 pStmt.setString(4, newValue);
 
                 pStmt.executeUpdate();
+                pStmt.close();
             }
 
             System.out.println("Insert update form data successfully!");
@@ -385,6 +418,7 @@ public class MockData {
                 pStmt.setInt(9, spotID);
 
                 pStmt.executeUpdate();
+                pStmt.close();
             }
 
             System.out.println("Insert reservation data successfully!");

@@ -79,6 +79,7 @@ public class UserMenu {
         return false;
     }
 
+    // TODO: Add checking member spot
     public boolean isValidSpot(String lotId, String spotId) {
         if (lotAndSpot.keySet().contains(lotId)) {
             if (isNumeric(spotId)) {
@@ -109,9 +110,42 @@ public class UserMenu {
                     lotAndSpot.put(lotId, temp);
                 }
             }
+
+            rset.close();
+            st.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    // TODO: Get member lot and spot
+    public HashMap<String, ArrayList<Integer>> getMemberLotAndSpot() {
+        HashMap<String, ArrayList<Integer>> memberLotAndSpot = new HashMap<String, ArrayList<Integer>>();
+        try {
+            Statement st = connection.createStatement();
+            ResultSet rset = st.executeQuery("SELECT * FROM parking.member;");
+
+            while (rset.next()) {
+                int spotId = rset.getInt("spot_id");
+                String lotId = rset.getString("lot_id");
+
+                if (memberLotAndSpot.get(lotId) == null) {
+                    ArrayList<Integer> temp = new ArrayList<Integer>();
+                    temp.add(spotId);
+                    memberLotAndSpot.put(lotId, temp);
+                } else {
+                    ArrayList<Integer> temp = lotAndSpot.get(lotId);
+                    temp.add(spotId);
+                    memberLotAndSpot.put(lotId, temp);
+                }
+            }
+
+            rset.close();
+            st.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return memberLotAndSpot;
     }
 
     public void getUserType() {
@@ -220,6 +254,7 @@ public class UserMenu {
     public void printUserProfile(ResultSet rset, String type) {
         try {
             System.out.println("\nUser Profile");
+            System.out.println(String.format("User ID: %s", rset.getString("user_id")));
             System.out.println(String.format("Name: %s", rset.getString("name")));
             System.out.println(String.format("Password: %s", rset.getString("password")));
 
@@ -378,11 +413,11 @@ public class UserMenu {
     */
     public HashMap<String, String> reservationMenu() {
         HashMap<String, String> reservationInfo = new HashMap<String, String>();
-        ArrayList<String> validApplicationTypes = new ArrayList<String>(Arrays.asList("online", "member", "drive in"));
+        ArrayList<String> validApplicationTypes = new ArrayList<String>(Arrays.asList("online", "member"));
 
         System.out.println("\nReservation");
 
-        System.out.print("Enter type of reservation (online, member, drive in): ");
+        System.out.print("Enter type of reservation (online, member): ");
         String applicationType = sc.nextLine();
 
         try {
@@ -393,11 +428,11 @@ public class UserMenu {
             if (validApplicationTypes.contains(applicationType)) {
                 reservationInfo.put("application_type", applicationType);
                 if (rset.next() && applicationType.equals("member")) {
-                    System.out.print("Enter time in (format yyyy-MM-dd hh:mm:ss): ");
+                    System.out.print("Enter check-in (format yyyy-MM-dd hh:mm:ss): ");
                     String timeIn = sc.nextLine();
                     reservationInfo.put("reservation_time_in", timeIn);
 
-                    System.out.print("Enter time out (format yyyy-MM-dd hh:mm:ss): ");
+                    System.out.print("Enter check-out (format yyyy-MM-dd hh:mm:ss): ");
                     String timeOut = sc.nextLine();
                     reservationInfo.put("reservation_time_out", timeOut);
 
