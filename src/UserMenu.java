@@ -25,6 +25,7 @@ public class UserMenu {
     private String type;
     private Date loginTime;
     private HashMap<String, ArrayList<Integer>> lotAndSpot = new HashMap<String, ArrayList<Integer>>();
+    private HashMap<String, ArrayList<Integer>> memberLotAndSpot = new HashMap<String, ArrayList<Integer>>();
 
     public UserMenu(String dbName, String dbUserName, String dbPassword, String userID, Date loginTime) {
         setDbName(dbName);
@@ -36,6 +37,7 @@ public class UserMenu {
         setLoginTime(loginTime);
         getUserType();
         getLotAndSpot();
+        getMemberLotAndSpot();
     }
 
     private Connection getConnection() {
@@ -112,13 +114,13 @@ public class UserMenu {
         if (lotAndSpot.keySet().contains(lotId)) {
             if (isNumeric(spotId)) {
                 if (lotAndSpot.get(lotId).contains(Integer.parseInt(spotId))) {
-                    HashMap<String, ArrayList<Integer>> memberLotAndSpot = getMemberLotAndSpot();
                     if (type == "user") {
-                        if (memberLotAndSpot.keySet().contains(lotId) && memberLotAndSpot.get(lotId).contains(Integer.parseInt(spotId))) {
-                            return false;
-                        } else {
-                            return true;
+                        if (memberLotAndSpot.keySet().contains(lotId)) {
+                            if (memberLotAndSpot.get(lotId).contains(Integer.parseInt(spotId))) {
+                                return false;
+                            }
                         }
+                        return true;
                     } else {
                         try {
                             PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?");
@@ -132,9 +134,8 @@ public class UserMenu {
                                     } else {
                                         return false;
                                     }
-                                } else {
-                                    return true;
                                 }
+                                return true;
                             }
 
                             rset.close();
@@ -177,8 +178,7 @@ public class UserMenu {
         }
     }
 
-    public HashMap<String, ArrayList<Integer>> getMemberLotAndSpot() {
-        HashMap<String, ArrayList<Integer>> memberLotAndSpot = new HashMap<String, ArrayList<Integer>>();
+    public void getMemberLotAndSpot() {
         try {
             Statement st = connection.createStatement();
             ResultSet rset = st.executeQuery("SELECT * FROM parking.member;");
@@ -192,7 +192,7 @@ public class UserMenu {
                     temp.add(spotId);
                     memberLotAndSpot.put(lotId, temp);
                 } else {
-                    ArrayList<Integer> temp = lotAndSpot.get(lotId);
+                    ArrayList<Integer> temp = memberLotAndSpot.get(lotId);
                     temp.add(spotId);
                     memberLotAndSpot.put(lotId, temp);
                 }
@@ -203,7 +203,6 @@ public class UserMenu {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return memberLotAndSpot;
     }
 
     public void getUserType() {
@@ -410,7 +409,7 @@ public class UserMenu {
     
     public void makeProfileUpdateRequest(String updateField, String newValue) {
         try {
-            PreparedStatement pst = connection.prepareStatement(String.format("INSERT INTO parking.update_form VALUES (?,?,?,?)", updateField));
+            PreparedStatement pst = connection.prepareStatement(String.format("INSERT INTO parking.update_form (user_id, time_made, field_to_update, new_value) VALUES (?,?,?,?)", updateField));
             pst.setString(1, userID);
             pst.setTimestamp(2, new Timestamp(new Date().getTime()));
             pst.setString(3, updateField);
@@ -561,7 +560,7 @@ public class UserMenu {
             }
 
             if (isValid) {
-                PreparedStatement pstReservation = connection.prepareStatement("INSERT INTO parking.reservation VALUES (?,?,?,?,?,?,?,?,?)");
+                PreparedStatement pstReservation = connection.prepareStatement("INSERT INTO parking.reservation (user_id, time_created, reservation_time_in, reservation_time_out, license_plate, application_type, employee_id, lot_id, spot_id) VALUES (?,?,?,?,?,?,?,?,?)");
                 pstReservation.setString(1, userID);
                 pstReservation.setTimestamp(2, new Timestamp(new Date().getTime()));
                 pstReservation.setTimestamp(3, new Timestamp(timeIn.getTime()));

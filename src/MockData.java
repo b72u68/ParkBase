@@ -54,9 +54,11 @@ public class MockData {
                 pStmt.executeUpdate();
 
                 Statement st = connection.createStatement();
+                String drop = "DROP USER IF EXISTS u" + userID;
                 String create = "CREATE USER u" + userID;
-
                 String grant = "GRANT r_user TO u" + userID;
+
+                st.executeUpdate(drop);
                 st.executeUpdate(create);
                 st.executeUpdate(grant);
 
@@ -220,9 +222,11 @@ public class MockData {
                 pStmt.executeUpdate();
 
                 Statement st = connection.createStatement();
+                String drop = "DROP USER IF EXISTS u" + employeeID;
                 String create = "CREATE USER u" + employeeID;
-
                 String grant = "GRANT staff TO u" + employeeID;
+
+                st.executeUpdate(drop);
                 st.executeUpdate(create);
                 st.executeUpdate(grant);
 
@@ -276,9 +280,11 @@ public class MockData {
                 pStmt.executeUpdate();
                 
                 Statement st = connection.createStatement();
+                String drop = "DROP USER IF EXISTS u" + adminID;
                 String create = "CREATE USER u" + adminID;
                 String grant = "GRANT admin TO u" + adminID;
 
+                st.executeUpdate(drop);
                 st.executeUpdate(create);
                 st.executeUpdate(grant);
 
