@@ -559,7 +559,7 @@ public class UserMenu {
                 }
             }
 
-            if (isValid) {
+            if (isValid || applicationType.equals("member")) {
                 PreparedStatement pstReservation = connection.prepareStatement("INSERT INTO parking.reservation (user_id, time_created, reservation_time_in, reservation_time_out, license_plate, application_type, employee_id, lot_id, spot_id) VALUES (?,?,?,?,?,?,?,?,?)");
                 pstReservation.setString(1, userID);
                 pstReservation.setTimestamp(2, new Timestamp(new Date().getTime()));
