@@ -115,7 +115,7 @@ public class AdminMenu extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//makes an instance of the user menu to activate the reservation screen
-				UserMenu um = new UserMenu(getConnection(), getUName(), new Date());
+				UserMenu um = new UserMenu(getdbName(), getdbUsername(), getdbPassword(), getUName(), new Date());
 				um.makeReservationScreen();
 			}
 			

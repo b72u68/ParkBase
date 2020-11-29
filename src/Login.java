@@ -101,7 +101,7 @@ public class Login extends JFrame{
 							if (rs2.next()) {
 								setVisible(false); // HIDE THE FRAME
 								dispose(); // CLOSE OUT THE WINDOW
-								UserMenu userMenu = new UserMenu(getConnection(), "7463462", new Date());
+								UserMenu userMenu = new UserMenu(getdbName(), getdbUsername(), getdbPassword(), txtUname.getText(), new Date());
 					            userMenu.UserMenuScreen();
 							} else
 								lblStatus.setText("User not found");

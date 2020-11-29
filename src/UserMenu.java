@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Arrays;
 
+import java.sql.DriverManager;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
@@ -14,6 +15,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class UserMenu {
+    private String dbName;
+    private String dbUserName;
+    private String dbPassword;
+
     private Connection connection;
     private Scanner sc = new Scanner(System.in);
     private String userID;
@@ -21,13 +26,29 @@ public class UserMenu {
     private Date loginTime;
     private HashMap<String, ArrayList<Integer>> lotAndSpot = new HashMap<String, ArrayList<Integer>>();
 
-    public UserMenu(Connection connection, String userID, Date loginTime) {
-        setConnection(connection);
+    public UserMenu(String dbName, String dbUserName, String dbPassword, String userID, Date loginTime) {
+        setDbName(dbName);
+        setDbUserName(dbUserName);
+        setDbPassword(dbPassword);
+        connection = getConnection();
+
         setUserID(userID);
         setLoginTime(loginTime);
         getUserType();
         getLotAndSpot();
     }
+
+    private Connection getConnection() {
+		try {
+			String url = "jdbc:postgresql://localhost:5432/";
+			url.concat(this.dbName);
+			connection = DriverManager.getConnection(url, dbUserName, dbPassword);
+		} catch (SQLException ex) {
+			System.out.println("Error: could not set connection");
+			ex.printStackTrace();
+		}
+		return connection;
+	}
 
     public String getUserID() {
         return userID;
@@ -37,8 +58,16 @@ public class UserMenu {
         return loginTime;
     }
 
-    public void setConnection(Connection connection) {
-        this.connection = connection;
+    private void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+
+    private void setDbUserName(String dbUserName) {
+        this.dbUserName = dbUserName;
+    }
+
+    private void setDbPassword(String dbPassword) {
+        this.dbPassword = dbPassword;
     }
 
     public void setUserID(String userID) {
@@ -79,12 +108,42 @@ public class UserMenu {
         return false;
     }
 
-    // TODO: Add checking member spot
     public boolean isValidSpot(String lotId, String spotId) {
         if (lotAndSpot.keySet().contains(lotId)) {
             if (isNumeric(spotId)) {
                 if (lotAndSpot.get(lotId).contains(Integer.parseInt(spotId))) {
-                    return true;
+                    HashMap<String, ArrayList<Integer>> memberLotAndSpot = getMemberLotAndSpot();
+                    if (type == "user") {
+                        if (memberLotAndSpot.keySet().contains(lotId) && memberLotAndSpot.get(lotId).contains(Integer.parseInt(spotId))) {
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    } else {
+                        try {
+                            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?");
+                            pst.setString(1, userID);
+                            ResultSet rset = pst.executeQuery();
+
+                            if (rset.next()) {
+                                if (memberLotAndSpot.keySet().contains(lotId) && memberLotAndSpot.get(lotId).contains(Integer.parseInt(spotId))) {
+                                    if (lotId.equals(rset.getString("lot_id")) && spotId.equals(Integer.toString(rset.getInt("spot_id")))) {
+                                        return true;
+                                    } else {
+                                        return false;
+                                    }
+                                } else {
+                                    return true;
+                                }
+                            }
+
+                            rset.close();
+                            pst.close();
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
                 } 
             } 
         }
@@ -118,7 +177,6 @@ public class UserMenu {
         }
     }
 
-    // TODO: Get member lot and spot
     public HashMap<String, ArrayList<Integer>> getMemberLotAndSpot() {
         HashMap<String, ArrayList<Integer>> memberLotAndSpot = new HashMap<String, ArrayList<Integer>>();
         try {
@@ -163,8 +221,6 @@ public class UserMenu {
 
                 if (userResult.next()) {
                     type = "user";
-                } else {
-                    type = "employee";
                 }
 
                 userResult.close();
@@ -234,17 +290,6 @@ public class UserMenu {
 
                     userResult.close();
                     pstUser.close();
-                } else if (type.equals("employee")) {
-                    PreparedStatement pstEmployee = connection.prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?");
-                    pstEmployee.setString(1, userID);
-                    ResultSet employeeResult = pstEmployee.executeQuery();
-
-                    if (employeeResult.next()) {
-                        printUserProfile(employeeResult, type);
-                    }
-
-                    pstEmployee.close();
-                    employeeResult.close();
                 }
         } catch (Exception e) {
             e.printStackTrace();
@@ -263,9 +308,6 @@ public class UserMenu {
                 System.out.println(String.format("Registered lot: %s", rset.getString("lot_id")));
                 System.out.println(String.format("Registered spot: %d", rset.getInt("spot_id")));
                 System.out.println(String.format("Membership fee: %f", rset.getDouble("membership_fee")));
-            } else if (type.equals("employee")) {
-                System.out.println(String.format("Type: %s", rset.getString("type")));
-                System.out.println(String.format("Salary: %f", rset.getDouble("salary")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -296,42 +338,32 @@ public class UserMenu {
 
         while (!exit) {
             String option = profileUpdateRequestOptions();
-            boolean isValid = false;
 
             switch (option) {
                 case "1":
-                    while (!isValid) {
-                        String value = getNewValue();
-                        if (value.length() <= 30) {
-                            makeProfileUpdateRequest("name", value);
-                            isValid = true;
-                        } else {
-                            System.out.println("\nInvalid input (name has to have less than 30 characters). Try again.");
-                        }
+                    String name = getNewValue();
+                    if (name.length() <= 30) {
+                        makeProfileUpdateRequest("name", name);
+                    } else {
+                        System.out.println("\nInvalid input (name has to have less than 30 characters). Try again.");
                     }
                     break;
                 case "2":
-                    while (!isValid) {
-                        String value = getNewValue();
-                        if (value.length() <= 20) {
-                            makeProfileUpdateRequest("password", value);
-                            isValid = true;
-                        } else {
-                            System.out.println("\nInvalid input (password has to have less than 20 characters). Try again.");
+                    String password = getNewValue();
+                    if (password.length() <= 20) {
+                        makeProfileUpdateRequest("password", password);
+                    } else {
+                        System.out.println("\nInvalid input (password has to have less than 20 characters). Try again.");
                         }
-                    }
                     break;
                 case "3":
                     if (type.equals("member")) {
-                        while (!isValid) {
-                            String value = getNewValue();
-                            boolean isValidLot = isValidLot(value);
-                            if (isValidLot) {
-                                makeProfileUpdateRequest("lot_id", value);
-                                isValid = true;
-                            } else {
-                                System.out.println("\nInvalid input (unavailable or invalid lot). Try again.");
-                            }
+                        String value = getNewValue();
+                        boolean isValidLot = isValidLot(value);
+                        if (isValidLot) {
+                            makeProfileUpdateRequest("lot_id", value);
+                        } else {
+                            System.out.println("\nInvalid input (unavailable or invalid lot). Try again.");
                         }
                     } else {
                         System.out.println("\nInvalid input. Try again.");
@@ -339,32 +371,29 @@ public class UserMenu {
                     break;
                 case "4":
                     if (type.equals("member")) {
-                        while (!isValid) {
-                            String value = getNewValue();
-                            String lotId = "";
-                            try {
-                                PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?");
-                                pst.setString(1, userID);
-                                ResultSet rset = pst.executeQuery();
+                        String value = getNewValue();
+                        String lotId = "";
+                        try {
+                            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?");
+                            pst.setString(1, userID);
+                            ResultSet rset = pst.executeQuery();
 
-                                if (rset.next()) {
-                                    lotId = rset.getString("lot_id");
-                                }
-                                
-                                rset.close();
-                                pst.close();
+                            if (rset.next()) {
+                                lotId = rset.getString("lot_id");
+                            }
+                            
+                            rset.close();
+                            pst.close();
 
-                                boolean isValidSpot = isValidSpot(lotId, value);
-                                if (isValidSpot) {
-                                    makeProfileUpdateRequest("spot_id", value);
-                                    isValid = true;
-                                } else {
-                                    System.out.println("\nInvalid input (unavailable or invalid spot). Try again.");
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                            boolean isValidSpot = isValidSpot(lotId, value);
+                            if (isValidSpot) {
+                                makeProfileUpdateRequest("spot_id", value);
+                            } else {
                                 System.out.println("\nInvalid input (unavailable or invalid spot). Try again.");
                             }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            System.out.println("\nInvalid input (unavailable or invalid spot). Try again.");
                         }
                     } else {
                         System.out.println("\nInvalid option. Try again.");
@@ -574,8 +603,8 @@ public class UserMenu {
                 System.out.println("\nReservation Information");
                 System.out.println(String.format("User: %s", userID));
                 System.out.println(String.format("License plate: %s", rset.getString("license_plate")));
-                System.out.println(String.format("Time in: %s", timeIn.toString()));
-                System.out.println(String.format("Time out: %s", timeOut.toString()));
+                System.out.println(String.format("Check in time: %s", timeIn.toString()));
+                System.out.println(String.format("Check out time: %s", timeOut.toString()));
                 System.out.println(String.format("Type: %s", rset.getString("application_type")));
                 System.out.println(String.format("Lot: %s", rset.getString("lot_id")));
                 System.out.println(String.format("Spot: %d", rset.getInt("spot_id")));
@@ -606,6 +635,9 @@ public class UserMenu {
 
             pst.close();
             sc.close();
+
+            new Login(dbName, dbUserName, dbUserName);
+
         } catch (Exception e) {
             e.printStackTrace();
         }

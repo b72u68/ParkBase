@@ -163,7 +163,7 @@ public class StaffMenu extends JFrame {
 		btnMR.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				UserMenu um = new UserMenu(getConnection(), getUName(), new Date());
+				UserMenu um = new UserMenu(getdbName(), getdbUsername(), getdbPassword(), getUName(), new Date());
 				um.makeReservationScreen();
 //				//initialize new jFrame 
 //				JFrame f = new JFrame("Create Reservation");

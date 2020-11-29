@@ -54,9 +54,9 @@ public class MockData {
                 pStmt.executeUpdate();
 
                 Statement st = connection.createStatement();
-                String create = "CREATE USER " + userID;
+                String create = "CREATE USER u" + userID;
 
-                String grant = "GRANT r_user TO " + userID;
+                String grant = "GRANT r_user TO u" + userID;
                 st.executeUpdate(create);
                 st.executeUpdate(grant);
 
@@ -103,7 +103,7 @@ public class MockData {
                 pStmt.executeUpdate();
 
                 Statement st = connection.createStatement();
-                String grant = "GRANT member TO " + userID;
+                String grant = "GRANT member TO u" + userID;
                 st.executeUpdate(grant);
 
                 st.close();
@@ -220,9 +220,9 @@ public class MockData {
                 pStmt.executeUpdate();
 
                 Statement st = connection.createStatement();
-                String create = "CREATE USER " + employeeID;
+                String create = "CREATE USER u" + employeeID;
 
-                String grant = "GRANT staff TO " + employeeID;
+                String grant = "GRANT staff TO u" + employeeID;
                 st.executeUpdate(create);
                 st.executeUpdate(grant);
 
@@ -276,8 +276,8 @@ public class MockData {
                 pStmt.executeUpdate();
                 
                 Statement st = connection.createStatement();
-                String create = "CREATE USER " + adminID;
-                String grant = "GRANT admin TO " + adminID;
+                String create = "CREATE USER u" + adminID;
+                String grant = "GRANT admin TO u" + adminID;
 
                 st.executeUpdate(create);
                 st.executeUpdate(grant);
