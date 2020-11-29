@@ -104,12 +104,11 @@ create table parking.temporary_license_plate (
 );
 
 create table parking.update_form (
-    user_id char(7) not null,
+    id char(7) not null,
     time_made timestamp,
     field_to_update varchar(20),
     new_value varchar(30),
-    primary key (user_id, time_made),
-    foreign key (user_id) references parking.user (user_id) on delete cascade
+    primary key (id, time_made)
 );
 
 create table parking.reservation (

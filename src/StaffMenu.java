@@ -12,6 +12,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -147,16 +149,28 @@ public class StaffMenu extends JFrame {
 				f.add(btnCP);
 				
 				//action listeners
-//				btnCU.addActionListener(new ActionListener() {
-//					
-//				});
-//				try {
-//					
-//					String userID = JOptionPane.showInputDialog(null, "Enter user ID");
-//					
-//				} catch (Exception ex){
-//					ex.printStackTrace();
-//				}
+				btnCU.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						try {
+							PreparedStatement pst = getConnection().prepareStatement("INSERT INTO parking.update_form (user_id, time_made, field_to_update, new_value) VALUES (?,?,?,?);",
+									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+							pst.setString(1, getUName());
+//							pst.setString(2, java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")));
+							pst.setTimestamp(2, new Timestamp(new Date().getTime()));
+							pst.setString(3, "name");
+							pst.setString(4, txtCU.getText());
+							pst.executeUpdate();
+							
+							System.out.println("Name change request successfully submitted!");
+							
+							pst.close();
+						} catch (SQLException ex){
+							System.out.println("Error: could not send name change request.");
+							ex.printStackTrace();
+						}
+					}
+				});
+				
 				f.setVisible(true);
 			}
 		});
