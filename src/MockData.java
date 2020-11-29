@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
@@ -52,15 +53,14 @@ public class MockData {
                 pStmt.setTimestamp(5, logoutTime);
                 pStmt.executeUpdate();
 
-                pStmt = connection.prepareStatement("CREATE USER ?");
-                pStmt.setString(1, userID);
-                pStmt.executeUpdate();
+                Statement st = connection.createStatement();
+                String create = "CREATE USER " + userID;
 
-                pStmt = connection.prepareStatement("GRANT ? TO ?");
-                pStmt.setString(1, "r_user");
-                pStmt.setString(2, userID);
-                pStmt.executeUpdate();
+                String grant = "GRANT r_user TO " + userID;
+                st.executeUpdate(create);
+                st.executeUpdate(grant);
 
+                st.close();
                 pStmt.close();
             }
 
@@ -102,11 +102,11 @@ public class MockData {
                 pStmt.setInt(4, spotID);
                 pStmt.executeUpdate();
 
-                pStmt = connection.prepareStatement("GRANT ? TO ?");
-                pStmt.setString(1, "member");
-                pStmt.setString(2, userID);
-                pStmt.executeUpdate();
+                Statement st = connection.createStatement();
+                String grant = "GRANT member TO " + userID;
+                st.executeUpdate(grant);
 
+                st.close();
                 pStmt.close();
             }
 
@@ -219,15 +219,14 @@ public class MockData {
                 pStmt.setString(5, type);
                 pStmt.executeUpdate();
 
-                pStmt = connection.prepareStatement("CREATE USER ?");
-                pStmt.setString(1, employeeID);
-                pStmt.executeUpdate();
+                Statement st = connection.createStatement();
+                String create = "CREATE USER " + employeeID;
 
-                pStmt = connection.prepareStatement("GRANT ? TO ?");
-                pStmt.setString(1, "staff");
-                pStmt.setString(2, employeeID);
-                pStmt.executeUpdate();
+                String grant = "GRANT staff TO " + employeeID;
+                st.executeUpdate(create);
+                st.executeUpdate(grant);
 
+                st.close();
                 pStmt.close();
             }
 
@@ -276,15 +275,14 @@ public class MockData {
                 pStmt.setTimestamp(5, logoutTime);
                 pStmt.executeUpdate();
                 
-                pStmt = connection.prepareStatement("CREATE USER ?");
-                pStmt.setString(1, adminID);
-                pStmt.executeUpdate();
+                Statement st = connection.createStatement();
+                String create = "CREATE USER " + adminID;
+                String grant = "GRANT admin TO " + adminID;
 
-                pStmt = connection.prepareStatement("GRANT ? TO ?");
-                pStmt.setString(1, "admin");
-                pStmt.setString(2, adminID);
-                pStmt.executeUpdate();
+                st.executeUpdate(create);
+                st.executeUpdate(grant);
 
+                st.close();
                 pStmt.close();
             }
 
