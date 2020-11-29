@@ -409,7 +409,7 @@ public class UserMenu {
     
     public void makeProfileUpdateRequest(String updateField, String newValue) {
         try {
-            PreparedStatement pst = connection.prepareStatement(String.format("INSERT INTO parking.update_form (user_id, time_made, field_to_update, new_value) VALUES (?,?,?,?)", updateField));
+            PreparedStatement pst = connection.prepareStatement(String.format("INSERT INTO parking.update_form (id, time_made, field_to_update, new_value) VALUES (?,?,?,?)", updateField));
             pst.setString(1, userID);
             pst.setTimestamp(2, new Timestamp(new Date().getTime()));
             pst.setString(3, updateField);
