@@ -261,7 +261,7 @@ public class MockData {
                 pStmt.executeUpdate();
             }
 
-            System.out.println("Insert employee data successfully!");
+            System.out.println("Insert admin data successfully!");
             adminData.close();
 
         } catch (SQLException ex) {
