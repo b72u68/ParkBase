@@ -352,7 +352,7 @@ public class MockData {
             formData.nextLine();
 
             while (formData.hasNextLine()) {
-                PreparedStatement pStmt = connection.prepareStatement("insert into parking.update_form (user_id, time_made, field_to_update, new_value) values (?,?,?,?)");
+                PreparedStatement pStmt = connection.prepareStatement("insert into parking.update_form (id, time_made, field_to_update, new_value) values (?,?,?,?)");
 
                 String data = formData.nextLine();
                 String[] dataList = data.split(",");
