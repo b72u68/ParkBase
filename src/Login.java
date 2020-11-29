@@ -82,7 +82,7 @@ public class Login extends JFrame{
 								setVisible(false); // HIDE THE FRAME
 								dispose(); // CLOSE OUT THE WINDOW
 								//Employee Menu
-								new StaffMenu(getdbName(), getdbUsername(), getdbPassword());
+								new StaffMenu(getdbName(), getdbUsername(), getdbPassword(), txtUname.getText());
 							} else
 								lblStatus.setText("Employee not found");
 						} catch (SQLException ex) {

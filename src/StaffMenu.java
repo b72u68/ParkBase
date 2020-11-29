@@ -36,9 +36,10 @@ public class StaffMenu extends JFrame {
 	private String dbName;
 	private String dbUsername;
 	private String dbPassword;
+	private String UName;
 	protected Connection connection;
 	
-	public StaffMenu(String dbName, String dbUsername, String dbPassword) {
+	public StaffMenu(String dbName, String dbUsername, String dbPassword, String UName) {
 		
 		//initialize jFrame 
 		super("Staff Menu");
@@ -47,7 +48,7 @@ public class StaffMenu extends JFrame {
 		setLocationRelativeTo(null);
 		
 		//establish database connection
-		setConnection(dbName, dbUsername, dbPassword);
+		setConnection(dbName, dbUsername, dbPassword, UName);
 		
 		//buttons
 		JButton btnPr = new JButton("View Profile");
@@ -162,65 +163,67 @@ public class StaffMenu extends JFrame {
 		btnMR.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				//initialize new jFrame 
-				JFrame f = new JFrame("Create Reservation");
-				f.setSize(450, 378);
-				f.setLayout(new GridLayout(7, 2));
-				f.setLocationRelativeTo(null);
-				
-				//labels
-				JLabel lblTy = new JLabel("Select Type of Reservation:"); //drop down
-				JLabel lblCI = new JLabel("Enter Check-In (yyyy-MM-dd hh:mm:ss):");
-				JLabel lblCO = new JLabel("Enter Check-Out (yyyy-MM-dd hh:mm:ss):");
-				JLabel lblLi = new JLabel("Choose License Plate:"); //drop down
-				JLabel lblLo = new JLabel("Choose Lot:"); //drop down
-				JLabel lblSp = new JLabel("Choose Spot Number:"); //drop down
-				
-				//text boxes
-				JTextField txtCI = new JTextField(20);
-				JTextField txtCO = new JTextField(20);
-				
-				//drop down menus
-				String[] reservationTypes = {"online","drive-in"};
-				JComboBox cbT = new JComboBox(reservationTypes);
-					/*TO-DO: need to make function that gets users license plates
-					  and stores it into string list below (licensePlates) */
-				String[] licensePlates = {"testing123","testing321"};
-				JComboBox cbLi = new JComboBox(licensePlates);
-					/*TO-DO: need to make function that gets lot letters
-				  	and stores it into string list below (lots) */
-				String[] lots = {"A","B", "C", "D"};
-				JComboBox cbLo = new JComboBox(lots);
-					/*TO-DO: need to make function that gets spot numbers
-				  	and stores it into string list below (spots) */
-				String[] spots = {"testing123","testing321"};
-				JComboBox cbSp = new JComboBox(spots);
-					
-				//adding objects to Frame
-				f.add(lblTy);
-				f.add(cbT);
-				
-				f.add(lblCI);
-				f.add(txtCI);
-				
-				f.add(lblCO);
-				f.add(txtCO);
-				
-				f.add(lblLi);
-				f.add(cbLi);
-				
-				f.add(lblLo);
-				f.add(cbLo);
-				
-				f.add(lblSp);
-				f.add(cbSp);
-				
-				
-				
-				
-				
-				
-				f.setVisible(true);
+				UserMenu um = new UserMenu(getConnection(), getUName(), new Date());
+				um.makeReservationScreen();
+//				//initialize new jFrame 
+//				JFrame f = new JFrame("Create Reservation");
+//				f.setSize(450, 378);
+//				f.setLayout(new GridLayout(7, 2));
+//				f.setLocationRelativeTo(null);
+//				
+//				//labels
+//				JLabel lblTy = new JLabel("Select Type of Reservation:"); //drop down
+//				JLabel lblCI = new JLabel("Enter Check-In (yyyy-MM-dd hh:mm:ss):");
+//				JLabel lblCO = new JLabel("Enter Check-Out (yyyy-MM-dd hh:mm:ss):");
+//				JLabel lblLi = new JLabel("Choose License Plate:"); //drop down
+//				JLabel lblLo = new JLabel("Choose Lot:"); //drop down
+//				JLabel lblSp = new JLabel("Choose Spot Number:"); //drop down
+//				
+//				//text boxes
+//				JTextField txtCI = new JTextField(20);
+//				JTextField txtCO = new JTextField(20);
+//				
+//				//drop down menus
+//				String[] reservationTypes = {"online","drive-in"};
+//				JComboBox cbT = new JComboBox(reservationTypes);
+//					/*TO-DO: need to make function that gets users license plates
+//					  and stores it into string list below (licensePlates) */
+//				String[] licensePlates = {"testing123","testing321"};
+//				JComboBox cbLi = new JComboBox(licensePlates);
+//					/*TO-DO: need to make function that gets lot letters
+//				  	and stores it into string list below (lots) */
+//				String[] lots = {"A","B", "C", "D"};
+//				JComboBox cbLo = new JComboBox(lots);
+//					/*TO-DO: need to make function that gets spot numbers
+//				  	and stores it into string list below (spots) */
+//				String[] spots = {"testing123","testing321"};
+//				JComboBox cbSp = new JComboBox(spots);
+//					
+//				//adding objects to Frame
+//				f.add(lblTy);
+//				f.add(cbT);
+//				
+//				f.add(lblCI);
+//				f.add(txtCI);
+//				
+//				f.add(lblCO);
+//				f.add(txtCO);
+//				
+//				f.add(lblLi);
+//				f.add(cbLi);
+//				
+//				f.add(lblLo);
+//				f.add(cbLo);
+//				
+//				f.add(lblSp);
+//				f.add(cbSp);
+//				
+//				
+//				
+//				
+//				
+//				
+//				f.setVisible(true);
 			}
 			
 		});
@@ -256,12 +259,13 @@ public class StaffMenu extends JFrame {
 		setVisible(true);
 	}
 	
-	private void setConnection(String dbName, String dbUsername, String dbPassword) {
+	private void setConnection(String dbName, String dbUsername, String dbPassword, String UName) {
 		
 		//set the variables for getConnection to initialize the connection with
 		this.dbName = dbName;
 		this.dbUsername = dbUsername;
 		this.dbPassword = dbPassword;
+		this.UName = UName;
 	}
 	
 	private Connection getConnection() {
@@ -287,5 +291,7 @@ public class StaffMenu extends JFrame {
 	public String getdbPassword() {
 		return this.dbPassword;
 	}
-	
+	public String getUName() {
+		return this.UName;
+	}
 }
