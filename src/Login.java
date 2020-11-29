@@ -6,11 +6,13 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Date;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
@@ -42,6 +44,7 @@ public class Login extends JFrame{
 		JPasswordField txtPassword = new JPasswordField();
 		JButton btnSubm = new JButton("Submit");
 		JButton btnExit = new JButton("Exit");
+		JButton btnSiUp = new JButton("Sign Up");
 
 		// constraints
 		lblUsername.setHorizontalAlignment(SwingConstants.CENTER);
@@ -54,7 +57,8 @@ public class Login extends JFrame{
 		add(txtPassword);
 		add(btnSubm);         
 		add(btnExit);
-		add(lblStatus);   
+		add(lblStatus);  
+		add(btnSiUp);
 
 
 		btnSubm.addActionListener(new ActionListener() {
@@ -98,7 +102,7 @@ public class Login extends JFrame{
 								setVisible(false); // HIDE THE FRAME
 								dispose(); // CLOSE OUT THE WINDOW
 								UserMenu userMenu = new UserMenu(getConnection(), "7463462", new Date());
-					            //userMenu.requestUpdate();
+					            userMenu.UserMenuScreen();
 							} else
 								lblStatus.setText("User not found");
 						} catch (SQLException ex) {
@@ -110,6 +114,46 @@ public class Login extends JFrame{
 				}
 				
 			}	
+		});
+		btnSiUp.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String name = JOptionPane.showInputDialog(null, "Enter your name");
+				String insert = "";
+				if (JOptionPane.showConfirmDialog (null, "Be a member","Join our premium reservations?", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+					insert = "INSERT INTO parking.member (user_id, password, name) values (?, ?, ?);";
+				} else {
+					insert = "INSERT INTO parking.user (user_id, password, name) values (?, ?, ?);";
+				}
+				String Uname = txtUname.getText();
+				String Pword = txtPassword.getText();
+				//inserts user into database
+				try (PreparedStatement stmt = getConnection().prepareStatement(insert)) {
+					stmt.setString(1, Uname);
+					stmt.setString(2, Pword);
+					stmt.setString(3, name);
+					stmt.executeUpdate();
+					stmt.close();
+				} catch (SQLException se) {
+					se.printStackTrace();
+				}
+				try (Statement stmt = getConnection().createStatement()) { 
+					String drop = "DROP USER IF EXISTS " + Uname;
+					String create = "CREATE USER " + Uname;
+					stmt.executeUpdate(drop);
+					stmt.executeUpdate(create);
+					stmt.close();
+				} catch (SQLException se) {
+					se.printStackTrace();
+				}
+				try (Statement stmt = getConnection().createStatement()) {
+					String grant = "GRANT r_user TO " + Uname;
+					stmt.executeUpdate(grant);
+					stmt.close();
+				} catch (SQLException se) {
+					se.printStackTrace();
+				}
+			}
 		});
 		
 		btnExit.addActionListener(e -> System.exit(0));
