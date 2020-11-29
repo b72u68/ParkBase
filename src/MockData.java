@@ -105,7 +105,7 @@ public class MockData {
                 pStmt.executeUpdate();
 
                 Statement st = connection.createStatement();
-                String grant = "GRANT member TO u_" + userID;
+                String grant = "GRANT member TO u" + userID;
                 st.executeUpdate(grant);
 
                 st.close();

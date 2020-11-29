@@ -634,6 +634,7 @@ public class UserMenu {
 
             pst.close();
             sc.close();
+            connection.close();
 
             new Login(dbName, dbUserName, dbUserName);
 
