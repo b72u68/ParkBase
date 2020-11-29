@@ -138,8 +138,8 @@ public class Login extends JFrame{
 					se.printStackTrace();
 				}
 				try (Statement stmt = getConnection().createStatement()) { 
-					String drop = "DROP USER IF EXISTS " + Uname;
-					String create = "CREATE USER " + Uname;
+					String drop = "DROP USER IF EXISTS u_" + Uname;
+					String create = "CREATE USER u_" + Uname;
 					stmt.executeUpdate(drop);
 					stmt.executeUpdate(create);
 					stmt.close();
@@ -147,7 +147,7 @@ public class Login extends JFrame{
 					se.printStackTrace();
 				}
 				try (Statement stmt = getConnection().createStatement()) {
-					String grant = "GRANT r_user TO " + Uname;
+					String grant = "GRANT r_user TO u_" + Uname;
 					stmt.executeUpdate(grant);
 					stmt.close();
 				} catch (SQLException se) {
