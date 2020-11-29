@@ -1,6 +1,7 @@
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -9,10 +10,12 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -106,21 +109,34 @@ public class StaffMenu extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				//initialize new jFrame 
 				JFrame f = new JFrame("Request Update");
-				f.setSize(450, 324);
-				f.setLayout(new GridLayout(6, 2));
+				f.setSize(675, 270);
+				f.setLayout(new GridLayout(0, 5));
 				f.setLocationRelativeTo(null);
 				
 				//labels
-				JLabel lblCU = new JLabel("Enter New Username");
-				JLabel lblCP = new JLabel("Enter New Password");
+				JLabel lblCU = new JLabel("New Value For:");
+				JLabel lblCP = new JLabel("Enter New Value:");
+				
+				//radio buttons
+				JRadioButton rbN = new JRadioButton("Name");
+				rbN.setSelected(true); //is automatically selected to avoid NULL value
+				JRadioButton rbP = new JRadioButton("Password");
+				JRadioButton rbL = new JRadioButton("Lot ID");
+				JRadioButton rbS = new JRadioButton("Spot ID");
+				
+				//Group the radio buttons.
+			    ButtonGroup g = new ButtonGroup();
+			    g.add(rbN);
+			    g.add(rbP);
+			    g.add(rbL);
+			    g.add(rbS);
 				
 				//text boxes
-				JTextField txtCU = new JTextField(30);
-				JTextField txtCP = new JTextField(20);
+				JTextField txtNV = new JTextField(30);
 				
 				//buttons
-				JButton btnCU = new JButton("Submit New Username Request");
-				JButton btnCP = new JButton("Submit New Password Request");
+				JButton btnS = new JButton("Submit Request");
+				JButton btnC = new JButton("Close");
 				
 				// constraints
 				lblCU.setHorizontalAlignment(SwingConstants.CENTER);
@@ -128,34 +144,55 @@ public class StaffMenu extends JFrame {
 				
 				//adding objects to frame
 				f.add(lblCU);
-				f.add(txtCU);
-				f.add(btnCU);
+				f.add(rbN);
+				f.add(rbP);
+				f.add(rbL);
+				f.add(rbS);
 				f.add(lblCP);
-				f.add(txtCP);
-				f.add(btnCP);
+				f.add(txtNV);
+				f.add(btnS);
+				f.add(btnC);
 				
 				//action listeners
-				btnCU.addActionListener(new ActionListener() {
+				btnS.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						try {
-							PreparedStatement pst = getConnection().prepareStatement("INSERT INTO parking.update_form (user_id, time_made, field_to_update, new_value) VALUES (?,?,?,?);",
+							PreparedStatement pst = getConnection().prepareStatement("INSERT INTO parking.update_form (id, time_made, field_to_update, new_value) VALUES (?,?,?,?);",
 									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 							pst.setString(1, getUName());
-//							pst.setString(2, java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")));
 							pst.setTimestamp(2, new Timestamp(new Date().getTime()));
-							pst.setString(3, "name");
-							pst.setString(4, txtCU.getText());
+							
+							if (rbN.isSelected()) {
+								pst.setString(3, "name");
+							} else if (rbP.isSelected()){
+								pst.setString(3, "password");
+							} else if (rbL.isSelected()) {
+								pst.setString(3, "lot_id");
+							} else {
+								pst.setString(3, "spot_id");
+							}
+							
+							pst.setString(4, txtNV.getText());
 							pst.executeUpdate();
 							
-							System.out.println("Name change request successfully submitted!");
 							
+							System.out.println("Change request successfully submitted!");
 							pst.close();
-						} catch (SQLException ex){
+							f.setVisible(false);
+							f.dispose();
+						} catch(SQLException ex) {
 							System.out.println("Error: could not send name change request.");
 							ex.printStackTrace();
 						}
 					}
 				});
+				btnC.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						f.setVisible(false);
+						f.dispose();
+					}
+				});
+				
 				
 				f.setVisible(true);
 			}
