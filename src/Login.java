@@ -119,12 +119,8 @@ public class Login extends JFrame{
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String name = JOptionPane.showInputDialog(null, "Enter your name");
-				String insert = "";
-				if (JOptionPane.showConfirmDialog (null, "Be a member","Join our premium reservations?", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-					insert = "INSERT INTO parking.member (user_id, password, name) values (?, ?, ?);";
-				} else {
-					insert = "INSERT INTO parking.user (user_id, password, name) values (?, ?, ?);";
-				}
+				String insert = "INSERT INTO parking.user (user_id, password, name) values (?, ?, ?);";
+				
 				String Uname = txtUname.getText();
 				String Pword = txtPassword.getText();
 				//inserts user into database
@@ -134,6 +130,19 @@ public class Login extends JFrame{
 					stmt.setString(3, name);
 					stmt.executeUpdate();
 					stmt.close();
+					if (JOptionPane.showConfirmDialog (null, "Be a member","Join our premium reservations?", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+						String plate = JOptionPane.showInputDialog(null, "Enter your license plate");
+						String lot = JOptionPane.showInputDialog(null, "Select your lot (A, B, or C)");
+						String spot = JOptionPane.showInputDialog(null, "Enter your spot (1-10)");
+						insert = "INSERT INTO parking.member (user_id, registered_license_plate, lot_id, spot_id) values (?, ?, ?, ?);";
+						PreparedStatement pstmt = getConnection().prepareStatement(insert);
+						pstmt.setString(1, Uname);
+						pstmt.setString(2, plate);
+						pstmt.setString(3, lot);
+						pstmt.setInt(4, Integer.parseInt(spot));
+						pstmt.executeUpdate();
+						pstmt.close();
+					}
 				} catch (SQLException se) {
 					se.printStackTrace();
 				}
