@@ -11,6 +11,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -121,11 +123,198 @@ public class AdminMenu extends JFrame {
 			
 		});
 		btnAR.addActionListener(new ActionListener() {
+			
+			//Coded by Danny Arvizu
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				//gets user ID
+				String userID = JOptionPane.showInputDialog(null, "Enter user ID for whom you're making a reservation:");
+				//initialize new jFrame 
+				JFrame f = new JFrame("Create Reservation For User: " + userID);
+				f.setSize(450, 540);
+				f.setLayout(new GridLayout(10, 2));
+				f.setLocationRelativeTo(null);
 				
+				//labels
+				JLabel lblTC = new JLabel("Time Created:", SwingConstants.CENTER); //auto-completed
+				JLabel lblCI = new JLabel("Check-In Time:", SwingConstants.CENTER); //auto-completed
+				JLabel lblCO = new JLabel("Check-Out Time:", SwingConstants.CENTER);
+				JLabel lblLi = new JLabel("Enter License Plate #:", SwingConstants.CENTER);
+				JLabel lblAp = new JLabel("Application Type:", SwingConstants.CENTER); //auto-completed
+				JLabel lblEm = new JLabel("Employee ID:", SwingConstants.CENTER); //auto-completed
+				JLabel lblLo = new JLabel("Lot ID:", SwingConstants.CENTER);
+				JLabel lblSp = new JLabel("Spot ID:", SwingConstants.CENTER);
+				
+				//time stamps
+				Timestamp now = new Timestamp(new Date().getTime());
+				
+				//text boxes
+				JTextField txtTC = new JTextField(20);
+				txtTC.setText(now.toString());
+				txtTC.setEditable(false);
+				JTextField txtCI = new JTextField(20);
+				txtCI.setText(now.toString());
+				txtCI.setEditable(false);
+				JTextField txtCO = new JTextField(20);
+				JTextField txtLi = new JTextField(20);
+				JTextField txtAp = new JTextField(20);
+				txtAp.setText("Drive-In");
+				txtAp.setEditable(false);
+				JTextField txtEm = new JTextField(20);
+				txtEm.setText(getUName());
+				txtEm.setEditable(false);
+				JTextField txtLo = new JTextField(10);
+				JTextField txtSp = new JTextField(10);
+				
+				//buttons
+				JButton btnS = new JButton("Submit");
+				JButton btnC = new JButton("Cancel");
+				
+				//adding objects to frame
+				f.add(lblTC);
+				f.add(txtTC);
+				f.add(lblCI);
+				f.add(txtCI);
+				f.add(lblCO);
+				f.add(txtCO);
+				f.add(lblLi);
+				f.add(txtLi);
+				f.add(lblAp);
+				f.add(txtAp);
+				f.add(lblEm);
+				f.add(txtEm);
+				f.add(lblLo);
+				f.add(txtLo);
+				f.add(lblSp);
+				f.add(txtSp);
+				f.add(btnS);
+				f.add(btnC);
+				
+				//action listeners
+				btnS.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						//check if input date is valid
+						boolean isDateValid = isTimeStampValid(txtCO.getText());
+						if (!isDateValid) {
+							System.out.println("Error: Date is not valid. Try Again");
+							f.setVisible(false);
+							f.dispose();
+							return;
+						} 
+						
+						//check if License is new and check if member is checking into their subscribed spot 
+						boolean isLicenseNew = true;
+						boolean isMemberSpot = false;
+						try {
+							PreparedStatement licS = getConnection().prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?;");
+							licS.setString(1, userID);
+							ResultSet licR = licS.executeQuery();
+							
+							while(licR.next()) {
+								if (txtLi.getText().equals(licR.getString("registered_license_plate"))) {
+									isLicenseNew = false;
+									if(txtLo.getText().equals(licR.getString("lot_id")) && licR.getInt("spot_id") == Integer.parseInt(txtSp.getText())) {
+										isMemberSpot = true;
+									}
+								} 
+							}
+							licR.close();
+							licS.close();
+						} catch (SQLException ex) {
+							isLicenseNew = true;
+						}
+						
+						//check if Lot and Spot are valid
+						boolean isValidLotSpot = false;
+						try {
+							PreparedStatement spS = getConnection().prepareStatement("SELECT * FROM parking.spot WHERE lot_id = ? AND spot_id = ?;");
+							spS.setString(1, txtLo.getText());
+							spS.setInt(2, Integer.parseInt(txtSp.getText()));
+							ResultSet spR = spS.executeQuery();
+							
+							while(spR.next()) {
+								isValidLotSpot = true;
+							}
+							
+							spR.close();
+							spS.close();
+						} catch (SQLException ex) {
+							isValidLotSpot = false;
+						}
+						if (!isValidLotSpot) {
+							System.out.println("Error: Lot and Spot location is invalid. Try Again");
+							f.setVisible(false);
+							f.dispose();
+							return;
+						} 
+						
+						//check if Lot and Spot are open for the time
+						boolean isOpenLotSpot = true;
+						try {
+							PreparedStatement reS = getConnection().prepareStatement("SELECT * FROM parking.reservation WHERE lot_id = ? AND spot_id = ? AND (reservation_time_in BETWEEN ? AND ? OR reservation_time_out BETWEEN ? AND ? OR ? BETWEEN reservation_time_in AND reservation_time_out);");
+							reS.setString(1, txtLo.getText());
+							reS.setInt(2, Integer.parseInt(txtSp.getText()));
+							reS.setTimestamp(3, Timestamp.valueOf(txtCI.getText()));
+							reS.setTimestamp(4, Timestamp.valueOf(txtCO.getText()));
+							reS.setTimestamp(5, Timestamp.valueOf(txtCI.getText()));
+							reS.setTimestamp(6, Timestamp.valueOf(txtCO.getText()));
+							reS.setTimestamp(7, Timestamp.valueOf(txtCI.getText()));
+							ResultSet reR = reS.executeQuery();
+							
+							while(reR.next()) {
+								isOpenLotSpot = false;
+							}
+							
+							reR.close();
+							reS.close();
+						} catch (SQLException ex) {
+							isOpenLotSpot = false;
+						}
+						if (!isOpenLotSpot) {
+							System.out.println("Error: Lot and Spot location are not avaible during request times. Try Again");
+							f.setVisible(false);
+							f.dispose();
+							return;
+						} 
+						
+						if(isDateValid && isValidLotSpot && isOpenLotSpot) {
+							try {
+								PreparedStatement regt = getConnection().prepareStatement("INSERT INTO parking.reservation (user_id, time_created, reservation_time_in, reservation_time_out, license_plate, application_type, employee_id, lot_id, spot_id) VALUES (?,?,?,?,?,?,?,?,?);",
+										ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+								regt.setString(1, userID);
+								regt.setTimestamp(2, Timestamp.valueOf(txtCI.getText()));
+								regt.setTimestamp(3, Timestamp.valueOf(txtCI.getText()));
+								regt.setTimestamp(4, Timestamp.valueOf(txtCO.getText()));
+								regt.setString(5, txtLi.getText());
+								regt.setString(6, "drive in");
+								regt.setString(7, getUName());
+								regt.setString(8, txtLo.getText());
+								regt.setInt(9, Integer.parseInt(txtSp.getText()));
+								regt.executeUpdate();
+								System.out.println("Successfully submitted registration!");
+								regt.close();
+								
+							} catch(SQLException ex) {
+								System.out.println("Error: could not submit request.");
+								ex.printStackTrace();
+							}
+						}
+						
+						f.setVisible(false);
+						f.dispose();
+					}
+				});
+				btnC.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						f.setVisible(false);
+						f.dispose();
+					}
+				});
+
+				f.setVisible(true);
 			}
 		});
+
 		btnUp.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -216,14 +405,14 @@ public class AdminMenu extends JFrame {
 								
 								//create confirmation popup
 								String userID = JOptionPane.showInputDialog(null, "Delete all update requests from this user ID");
-								PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM parking.update_form WHERE parking.update_form.user_id = ?;",
+								PreparedStatement pst = getConnection().prepareStatement("SELECT * FROM parking.update_form WHERE parking.update_form.id = ?;",
 									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 								pst.setString(1, userID);
 								ResultSet profile = pst.executeQuery();
 								
 								//if the profile is found, delete all update_form entries associated with that id
 								if (profile.next()) {
-									pst = getConnection().prepareStatement("DELETE FROM parking.update_form WHERE parking.update_form.user_id = ?;");
+									pst = getConnection().prepareStatement("DELETE FROM parking.update_form WHERE parking.update_form.id = ?;");
 									pst.setString(1, userID);
 									pst.executeUpdate();
 									System.out.println("All update requests from user \"" + userID + "\" closed.");
@@ -245,6 +434,7 @@ public class AdminMenu extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
+					System.out.println("Running report, please wait...");
 					Statement stm = getConnection().createStatement();
 					
 					//gathers info about available spots
@@ -543,5 +733,17 @@ public class AdminMenu extends JFrame {
 	public String getUName() {
 		return this.UName;
 	}
+	
+	//Coded by Danny Arvizu
+	//helper functions for reservation
+		public boolean isTimeStampValid(String timeOut){
+			DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+	        try {
+	            format.parse(timeOut);
+	        } catch (Exception e) {
+	            return false;
+	        }
+	        return true;
+	    }
 	
 }
