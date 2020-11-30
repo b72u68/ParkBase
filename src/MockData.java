@@ -54,9 +54,9 @@ public class MockData {
                 pStmt.executeUpdate();
 
                 Statement st = connection.createStatement();
-                String drop = "DROP USER IF EXISTS u" + userID;
-                String create = "CREATE USER u" + userID;
-                String grant = "GRANT r_user TO u" + userID;
+                String drop = "DROP USER IF EXISTS u_" + userID;
+                String create = "CREATE USER u_" + userID;
+                String grant = "GRANT r_user TO u_" + userID;
 
                 st.executeUpdate(drop);
                 st.executeUpdate(create);
@@ -105,7 +105,7 @@ public class MockData {
                 pStmt.executeUpdate();
 
                 Statement st = connection.createStatement();
-                String grant = "GRANT member TO u" + userID;
+                String grant = "GRANT member TO u_" + userID;
                 st.executeUpdate(grant);
 
                 st.close();
@@ -222,9 +222,9 @@ public class MockData {
                 pStmt.executeUpdate();
 
                 Statement st = connection.createStatement();
-                String drop = "DROP USER IF EXISTS u" + employeeID;
-                String create = "CREATE USER u" + employeeID;
-                String grant = "GRANT staff TO u" + employeeID;
+                String drop = "DROP USER IF EXISTS u_" + employeeID;
+                String create = "CREATE USER u_" + employeeID;
+                String grant = "GRANT staff TO u_" + employeeID;
 
                 st.executeUpdate(drop);
                 st.executeUpdate(create);
@@ -280,9 +280,9 @@ public class MockData {
                 pStmt.executeUpdate();
                 
                 Statement st = connection.createStatement();
-                String drop = "DROP USER IF EXISTS u" + adminID;
-                String create = "CREATE USER u" + adminID;
-                String grant = "GRANT admin TO u" + adminID;
+                String drop = "DROP USER IF EXISTS u_" + adminID;
+                String create = "CREATE USER u_" + adminID;
+                String grant = "GRANT admin TO u_" + adminID;
 
                 st.executeUpdate(drop);
                 st.executeUpdate(create);
