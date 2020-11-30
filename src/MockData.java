@@ -271,6 +271,7 @@ public class MockData {
 					System.out.println("Error: could not read time");
 					e.printStackTrace();
 				}
+				double salary = Double.parseDouble(dataList[5]);
 
                 pStmt.setString(1, adminID);
                 pStmt.setString(2, name);
@@ -287,6 +288,14 @@ public class MockData {
                 st.executeUpdate(drop);
                 st.executeUpdate(create);
                 st.executeUpdate(grant);
+                
+                pStmt = connection.prepareStatement("insert into parking.employee (employee_id, name, password, salary, type) values (?,?,?,?,?)");
+                pStmt.setString(1, adminID);
+                pStmt.setString(2, name);
+                pStmt.setString(3, password);
+                pStmt.setDouble(4, salary);
+                pStmt.setString(5, "admin");
+                pStmt.executeUpdate();
 
                 st.close();
                 pStmt.close();
