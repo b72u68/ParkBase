@@ -319,6 +319,8 @@ public class UserMenu {
 
         if (type.equals("member")) {
             System.out.println("3. Lot\n4. Spot\n5. Exit");
+        } else {
+            System.out.println("3. Exit");
         }
 
         System.out.print("Enter option here: ");
@@ -365,7 +367,9 @@ public class UserMenu {
                             System.out.println("\nInvalid input (unavailable or invalid lot). Try again.");
                         }
                     } else {
-                        System.out.println("\nInvalid input. Try again.");
+                        System.out.println("\nGoing back to user menu...");
+                        exit = true;
+                        break;
                     }
                     break;
                 case "4":
@@ -399,6 +403,7 @@ public class UserMenu {
                     }
                     break;
                 case "5":
+                    System.out.println("\nGoing back to user menu...");
                     exit = true;
                     break;
                 default:
@@ -634,7 +639,6 @@ public class UserMenu {
 
             pst.close();
             sc.close();
-            connection.close();
 
             new Login(dbName, dbUserName, dbUserName);
 
