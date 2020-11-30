@@ -640,7 +640,7 @@ public class UserMenu {
             pst.close();
             sc.close();
 
-            new Login(dbName, dbUserName, dbUserName);
+            new Login(dbName, dbUserName, dbPassword);
 
         } catch (Exception e) {
             e.printStackTrace();
