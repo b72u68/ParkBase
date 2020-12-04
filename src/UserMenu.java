@@ -2,6 +2,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Scanner;
+
 import java.util.Arrays;
 
 import java.sql.DriverManager;
@@ -114,11 +115,9 @@ public class UserMenu {
         if (lotAndSpot.keySet().contains(lotId)) {
             if (isNumeric(spotId)) {
                 if (lotAndSpot.get(lotId).contains(Integer.parseInt(spotId))) {
-                    if (type == "user") {
-                        if (memberLotAndSpot.keySet().contains(lotId)) {
-                            if (memberLotAndSpot.get(lotId).contains(Integer.parseInt(spotId))) {
-                                return false;
-                            }
+                    if (type.equals("user")) {
+                        if (memberLotAndSpot.keySet().contains(lotId) && memberLotAndSpot.get(lotId).contains(Integer.parseInt(spotId))) {
+                            return false;
                         }
                         return true;
                     } else {
@@ -306,7 +305,7 @@ public class UserMenu {
                 System.out.println(String.format("Registered license plate: %s", rset.getString("registered_license_plate")));
                 System.out.println(String.format("Registered lot: %s", rset.getString("lot_id")));
                 System.out.println(String.format("Registered spot: %d", rset.getInt("spot_id")));
-                System.out.println(String.format("Membership fee: %f", rset.getDouble("membership_fee")));
+                System.out.println(String.format("Membership fee: $%.2f", rset.getDouble("membership_fee")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -318,7 +317,7 @@ public class UserMenu {
         System.out.println("1. Name\n2. Password");
 
         if (type.equals("member")) {
-            System.out.println("3. Lot\n4. Spot\n5. Exit");
+            System.out.println("3. Registered lot\n4. Registered spot\n5. Exit");
         } else {
             System.out.println("3. Exit");
         }
@@ -329,7 +328,7 @@ public class UserMenu {
     }
 
     public String getNewValue() {
-        System.out.print("Enter new value here: ");
+        System.out.print("\nEnter new value here: ");
         String newValue = sc.nextLine();
         return newValue;
     }
@@ -414,19 +413,58 @@ public class UserMenu {
     
     public void makeProfileUpdateRequest(String updateField, String newValue) {
         try {
+            Date timeMade = new Date();
             PreparedStatement pst = connection.prepareStatement(String.format("INSERT INTO parking.update_form (id, time_made, field_to_update, new_value) VALUES (?,?,?,?)", updateField));
             pst.setString(1, userID);
-            pst.setTimestamp(2, new Timestamp(new Date().getTime()));
+            pst.setTimestamp(2, new Timestamp(timeMade.getTime()));
             pst.setString(3, updateField);
-            if (updateField.equals("spot_id")) {
-                pst.setInt(4, Integer.parseInt(newValue));
-            } else {
-                pst.setString(4, newValue);
-            }
+            pst.setString(4, newValue);
             pst.executeUpdate();
 
-            System.out.println("Make profile update request successfully.");
+            System.out.println("\nMake profile update request successfully.");
 
+            printProfileUpdateRequest(timeMade);
+
+            pst.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void printProfileUpdateRequest(Date timeMade) {
+        try {
+            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.update_form WHERE parking.update_form.id = ? AND parking.update_form.time_made = ?");
+            pst.setString(1, userID);
+            pst.setTimestamp(2, new Timestamp(timeMade.getTime()));
+            ResultSet rset = pst.executeQuery();
+
+            if (rset.next()) {
+                System.out.println("\nProfile Update Form");
+                String updateField = "";
+
+                switch (rset.getString("field_to_update")) {
+                    case "name":
+                        updateField = "Name";
+                        break;
+                    case "password":
+                        updateField = "Password";
+                        break;
+                    case "lot_id":
+                        updateField = "Registered lot";
+                        break;
+                    case "spot_id":
+                        updateField = "Registered spot";
+                        break;
+                    default:
+                        break;
+                }
+
+                System.out.println(String.format("Time made: %s", rset.getTimestamp("time_made").toString()));
+                System.out.println(String.format("Update field: %s", updateField));
+                System.out.println(String.format("New value: %s", rset.getString("new_value")));
+            }
+
+            rset.close();
             pst.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -547,6 +585,7 @@ public class UserMenu {
 
     public void makeReservation(String applicationType, Date timeIn, Date timeOut, String licensePlate, String lotId, String spotId) {
         boolean isValid = true;
+        Date timeCreated = new Date();
         try {
             PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.reservation WHERE parking.reservation.lot_id = ? AND parking.reservation.spot_id = ?");
             pst.setString(1, lotId);
@@ -567,7 +606,7 @@ public class UserMenu {
             if (isValid || applicationType.equals("member")) {
                 PreparedStatement pstReservation = connection.prepareStatement("INSERT INTO parking.reservation (user_id, time_created, reservation_time_in, reservation_time_out, license_plate, application_type, employee_id, lot_id, spot_id) VALUES (?,?,?,?,?,?,?,?,?)");
                 pstReservation.setString(1, userID);
-                pstReservation.setTimestamp(2, new Timestamp(new Date().getTime()));
+                pstReservation.setTimestamp(2, new Timestamp(timeCreated.getTime()));
                 pstReservation.setTimestamp(3, new Timestamp(timeIn.getTime()));
                 pstReservation.setTimestamp(4, new Timestamp(timeOut.getTime()));
                 pstReservation.setString(5, licensePlate);
@@ -582,7 +621,7 @@ public class UserMenu {
 
                 System.out.println("\nMake reservation successfully.");
 
-                printReservationInfo(applicationType, timeIn, timeOut, licensePlate, lotId, spotId);
+                printReservationInfo(timeCreated);
             }
 
             rset.close();
@@ -592,36 +631,35 @@ public class UserMenu {
         }
     }
 
-    public void printReservationInfo(String applicationType, Date timeIn, Date timeOut, String licensePlate, String lotId, String spotId) {
+    public void printReservationInfo(Date timeCreated) {
         try {
-            PreparedStatement pstReservation = connection.prepareStatement("SELECT * FROM parking.reservation NATURAL JOIN parking.parking_lot WHERE parking.reservation.user_id = ? AND parking.reservation.reservation_time_in = ? AND parking.reservation.reservation_time_out = ? AND parking.reservation.lot_id = ? AND parking.reservation.spot_id = ?");
-            pstReservation.setString(1, userID);
-            pstReservation.setTimestamp(2, new Timestamp(timeIn.getTime()));
-            pstReservation.setTimestamp(3, new Timestamp(timeOut.getTime()));
-            pstReservation.setString(4, lotId);
-            pstReservation.setInt(5, Integer.parseInt(spotId));
+            PreparedStatement pst = connection.prepareStatement("SELECT * FROM parking.reservation, parking.parking_lot WHERE parking.parking_lot.lot_id = parking.reservation.lot_id AND parking.reservation.user_id = ? AND parking.reservation.time_created = ?");
+            pst.setString(1, userID);
+            pst.setTimestamp(2, new Timestamp(timeCreated.getTime()));
 
-            ResultSet rset = pstReservation.executeQuery();
+            ResultSet rset = pst.executeQuery();
 
             while (rset.next()) {
                 System.out.println("\nReservation Information");
+                System.out.println(String.format("Time made: %s", rset.getTimestamp("time_created").toString()));
                 System.out.println(String.format("User: %s", userID));
                 System.out.println(String.format("License plate: %s", rset.getString("license_plate")));
-                System.out.println(String.format("Check in time: %s", timeIn.toString()));
-                System.out.println(String.format("Check out time: %s", timeOut.toString()));
+                System.out.println(String.format("Check in time: %s", rset.getTimestamp("reservation_time_in").toString()));
+                System.out.println(String.format("Check out time: %s", rset.getTimestamp("reservation_time_out").toString()));
                 System.out.println(String.format("Type: %s", rset.getString("application_type")));
                 System.out.println(String.format("Lot: %s", rset.getString("lot_id")));
                 System.out.println(String.format("Spot: %d", rset.getInt("spot_id")));
 
-                if (applicationType.equals("member")) {
-                    System.out.println(String.format("Fee: %f", rset.getDouble("membership_fee")));
+
+                if (rset.getString("application_type").equals("member")) {
+                    System.out.println(String.format("Fee: $0.00 (membership fee: $%.2f)", rset.getDouble("membership_fee")));
                 } else {
-                    System.out.println(String.format("Fee: %f", rset.getDouble("guest_fee")));
+                    System.out.println(String.format("Fee: $%.2f", rset.getDouble("guest_fee")));
                 }
             }
 
             rset.close();
-            pstReservation.close();
+            pst.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -638,7 +676,6 @@ public class UserMenu {
             System.out.println("\nLogging out...");
 
             pst.close();
-            sc.close();
 
             new Login(dbName, dbUserName, dbPassword);
 

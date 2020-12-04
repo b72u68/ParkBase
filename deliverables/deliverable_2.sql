@@ -137,7 +137,7 @@ create view parking.booking as
 -- for showing table of available spots on listed days
 
 create view parking.member_pay as
-	select lot_id, start_month, end_month, mem_count*membership_fee-upkeep_cost as mem_profit		
+	select lot_id, start_month, end_month, mem_count*membership_fee-upkeep_cost as mem_profit
 	from (
 		select *
 		from (
@@ -147,7 +147,7 @@ create view parking.member_pay as
 	) as bar;
 
 create view parking.guest_pay as
-	select lot_id, start_month, end_month, guest_count*guest_fee-upkeep_cost as guest_profit			
+	select lot_id, start_month, end_month, guest_count*guest_fee-upkeep_cost as guest_profit
 	from (
 		select *
 		from (
@@ -178,7 +178,7 @@ create view parking.lot_ratios as (
 );
 
 create view parking.times as select user_id, login_time, logout_time from parking.user;
---end report views 
+--end report views
 
 create role r_user;
 create role member;
