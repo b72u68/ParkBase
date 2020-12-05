@@ -317,7 +317,7 @@ public class UserMenu {
         System.out.println("1. Name\n2. Password");
 
         if (type.equals("member")) {
-            System.out.println("3. Registered lot\n4. Registered spot\n5. Exit");
+            System.out.println("3. Registered license plate\n4. Registered lot\n5. Registered spot\n6. Exit");
         } else {
             System.out.println("3. Exit");
         }
@@ -359,6 +359,19 @@ public class UserMenu {
                 case "3":
                     if (type.equals("member")) {
                         String value = getNewValue();
+                        if (value.length() == 7) {
+                            makeProfileUpdateRequest("license_plate", value);
+                        } else {
+                            System.out.println("\nInvalid input (invalid license plate). Try again.");
+                        }
+                    } else {
+                        System.out.println("\nGoing back to user menu...");
+                        exit = true;
+                    }
+                    break;
+                case "4":
+                    if (type.equals("member")) {
+                        String value = getNewValue();
                         boolean isValidLot = isValidLot(value);
                         if (isValidLot) {
                             makeProfileUpdateRequest("lot_id", value);
@@ -366,12 +379,10 @@ public class UserMenu {
                             System.out.println("\nInvalid input (unavailable or invalid lot). Try again.");
                         }
                     } else {
-                        System.out.println("\nGoing back to user menu...");
-                        exit = true;
-                        break;
+                        System.out.println("\nInvalid option. Try again.");
                     }
                     break;
-                case "4":
+                case "5":
                     if (type.equals("member")) {
                         String value = getNewValue();
                         String lotId = "";
@@ -401,7 +412,7 @@ public class UserMenu {
                         System.out.println("\nInvalid option. Try again.");
                     }
                     break;
-                case "5":
+                case "6":
                     System.out.println("\nGoing back to user menu...");
                     exit = true;
                     break;
@@ -448,6 +459,9 @@ public class UserMenu {
                         break;
                     case "password":
                         updateField = "Password";
+                        break;
+                    case "license_plate":
+                        updateField = "Registered license plate";
                         break;
                     case "lot_id":
                         updateField = "Registered lot";
