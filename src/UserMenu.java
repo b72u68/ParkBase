@@ -450,28 +450,33 @@ public class UserMenu {
                             ResultSet rset = pst.executeQuery();
 
                             String value = getNewValue();
+                            Date timeCreated = new Date();
                             
                             if (value.length() == 7) {
                                 if (rset.next()) {
                                     PreparedStatement pstUpdate = connection.prepareStatement("UPDATE parking.temporary_license_plate SET plate_number = ?, time_created = ? WHERE user_id = ?");
                                     pstUpdate.setString(1, value);
-                                    pstUpdate.setTimestamp(2, new Timestamp(new Date().getTime()));
+                                    pstUpdate.setTimestamp(2, new Timestamp(timeCreated.getTime()));
                                     pstUpdate.setString(3, userID);
 
                                     pstUpdate.executeUpdate();
                                     pstUpdate.close();
 
-                                    makeProfileUpdateRequest("temp_license_plate", value);
+                                    System.out.println("\nProfile Update Form");
+                                    System.out.println("Update field: Temporary license plate");
+                                    System.out.println(String.format("New value: %s", value));
                                 } else {
                                     PreparedStatement pstCreate = connection.prepareStatement("INSERT INTO parking.temporary_license_plate (user_id, plate_number, time_created) VALUES (?,?,?)");
                                     pstCreate.setString(1, userID);
                                     pstCreate.setString(2, value);
-                                    pstCreate.setTimestamp(3, new Timestamp(new Date().getTime()));
+                                    pstCreate.setTimestamp(3, new Timestamp(timeCreated.getTime()));
 
                                     pstCreate.executeUpdate();
                                     pstCreate.close();
 
-                                    makeProfileUpdateRequest("temp_license_plate", value);
+                                    System.out.println("\nProfile Update Form");
+                                    System.out.println("Update field: Temporary license plate");
+                                    System.out.println(String.format("New value: %s", value));
                                 }
                             } else {
                                 System.out.println("\nInvalid input (license plate has 7 characters). Try again.");
@@ -546,9 +551,6 @@ public class UserMenu {
                         break;
                     case "spot_id":
                         updateField = "Registered spot";
-                        break;
-                    case "temp_license_plate":
-                        updateField = "Temporary license plate";
                         break;
                     default:
                         break;
