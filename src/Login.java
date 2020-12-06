@@ -17,7 +17,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-
+@SuppressWarnings("serial")
 public class Login extends JFrame{
 	protected  String url;
 	private String dbName;

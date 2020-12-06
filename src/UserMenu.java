@@ -302,10 +302,24 @@ public class UserMenu {
             System.out.println(String.format("Password: %s", rset.getString("password")));
 
             if (type.equals("member")) {
+                PreparedStatement pst = connection.prepareStatement("DELETE FROM parking.temporary_license_plate WHERE parking.temporary_license_plate.time_created <= NOW() - INTERVAL \'1 DAY\'");
+                pst.executeUpdate();
+
+                pst = connection.prepareStatement("SELECT * FROM parking.temporary_license_plate WHERE parking.temporary_license_plate.user_id = ?");
+                pst.setString(1, userID);
+
+                ResultSet rsetTemp = pst.executeQuery();
+
                 System.out.println(String.format("Registered license plate: %s", rset.getString("registered_license_plate")));
+                if (rsetTemp.next()) {
+                    System.out.println(String.format("Temporary license plate: %s", rsetTemp.getString("plate_number")));
+                }
                 System.out.println(String.format("Registered lot: %s", rset.getString("lot_id")));
                 System.out.println(String.format("Registered spot: %d", rset.getInt("spot_id")));
                 System.out.println(String.format("Membership fee: $%.2f", rset.getDouble("membership_fee")));
+
+                rsetTemp.close();
+                pst.close();
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -317,7 +331,7 @@ public class UserMenu {
         System.out.println("1. Name\n2. Password");
 
         if (type.equals("member")) {
-            System.out.println("3. Registered license plate\n4. Registered lot\n5. Registered spot\n6. Exit");
+            System.out.println("3. Registered license plate\n4. Registered lot\n5. Registered spot\n6. Temporary license plate\n7. Exit");
         } else {
             System.out.println("3. Exit");
         }
@@ -360,9 +374,9 @@ public class UserMenu {
                     if (type.equals("member")) {
                         String value = getNewValue();
                         if (value.length() == 7) {
-                            makeProfileUpdateRequest("license_plate", value);
+                            makeProfileUpdateRequest("reg_license_plate", value);
                         } else {
-                            System.out.println("\nInvalid input (invalid license plate). Try again.");
+                            System.out.println("\nInvalid input (license plate has 7 characters). Try again.");
                         }
                     } else {
                         System.out.println("\nGoing back to user menu...");
@@ -413,8 +427,50 @@ public class UserMenu {
                     }
                     break;
                 case "6":
-                    System.out.println("\nGoing back to user menu...");
-                    exit = true;
+                    if (type.equals("member")) {
+                        try {
+                            PreparedStatement pst = connection.prepareStatement("DELETE FROM parking.temporary_license_plate WHERE parking.temporary_license_plate.time_created <= NOW() - INTERVAL \'1 Day\'");
+                            pst.executeUpdate();
+
+                            pst = connection.prepareStatement("SELECT * FROM parking.temporary_license_plate WHERE parking.temporary_license_plate.user_id = ?");
+                            pst.setString(1, userID);
+
+                            ResultSet rset = pst.executeQuery();
+
+                            if (rset.next()) {
+                                System.out.println("\nInvalid input (You already have temporary license plate). Try again.");
+                            } else {
+                                String value = getNewValue();
+                                if (value.length() == 7) {
+                                    pst = connection.prepareStatement("INSERT INTO parking.temporary_license_plate (user_id, plate_number, time_created) VALUES (?,?,?)");
+                                    pst.setString(1, userID);
+                                    pst.setString(2, value);
+                                    pst.setTimestamp(3, new Timestamp(new Date().getTime()));
+
+                                    pst.executeUpdate();
+
+                                    makeProfileUpdateRequest("temp_license_plate", value);
+                                } else {
+                                    System.out.println("\nInvalid input (license plate has 7 characters). Try again.");
+                                }
+                            }
+
+                            pst.close();
+                            rset.close();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        System.out.println("\nInvalid input (unavailable or invalid spot). Try again.");
+                    }
+                    break;
+                case "7":
+                    if (type.equals("member")) {
+                        System.out.println("\nGoing back to user menu...");
+                        exit = true;
+                    } else {
+                        System.out.println("\nInvalid input (unavailable or invalid spot). Try again.");
+                    }
                     break;
                 default:
                     System.out.println("\nInvalid option. Try again.");
@@ -460,7 +516,7 @@ public class UserMenu {
                     case "password":
                         updateField = "Password";
                         break;
-                    case "license_plate":
+                    case "reg_license_plate":
                         updateField = "Registered license plate";
                         break;
                     case "lot_id":
@@ -468,6 +524,9 @@ public class UserMenu {
                         break;
                     case "spot_id":
                         updateField = "Registered spot";
+                        break;
+                    case "temp_license_plate":
+                        updateField = "Temporary license plate";
                         break;
                     default:
                         break;
