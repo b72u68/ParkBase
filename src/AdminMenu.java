@@ -358,32 +358,34 @@ public class AdminMenu extends JFrame {
 								
 								if (profile.next()) {
 									update_confirmation_form(UpFrame, "user", userID);		//current user is in user table
-								}
+								} else {
 								//search the member table to see if they are a member
 								pst = getConnection().prepareStatement("SELECT * FROM parking.member WHERE parking.member.user_id = ?;",
 											ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 								pst.setString(1, userID);
 								profile = pst.executeQuery();
 								pst.close();
-									
+								}
 								if (profile.next()) {
 									update_confirmation_form(UpFrame, "member", userID);		//current user is a member
-								} 
+								} else {
 								//search the admin table to see if they are an admin
 								pst = getConnection().prepareStatement("SELECT * FROM parking.admin WHERE parking.admin.admin_id = ?;",
 												ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 								pst.setString(1, userID);
 								profile = pst.executeQuery();
 								pst.close();
+								}
 								if (profile.next()) {
 									update_confirmation_form(UpFrame, "admin", userID);
-								}
+								} else {
 								//search the employee table to see if they are an employee
 								pst = getConnection().prepareStatement("SELECT * FROM parking.employee WHERE parking.employee.employee_id = ?;",
 												ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 								pst.setString(1, userID);
 								profile = pst.executeQuery();
 								pst.close();
+								}
 								if (profile.next()) {
 									update_confirmation_form(UpFrame, "employee", userID);
 								}
@@ -429,6 +431,8 @@ public class AdminMenu extends JFrame {
 				}
 			}
 		});
+		
+		//Look for reservation on 11-06-2020, 16:00:00
 		btnRp.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -692,6 +696,7 @@ public class AdminMenu extends JFrame {
 				frame.dispose();
 			}
 		});
+		setVisible(true);
 	}
 
 
