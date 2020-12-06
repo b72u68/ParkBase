@@ -1,4 +1,5 @@
 import java.util.Date;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -79,6 +80,13 @@ public class UserMenu {
 
     private void setLoginTime(Date loginTime) {
         this.loginTime = loginTime;
+    }
+
+    public String convertTime(Long millisecond) {
+        int seconds = (int) ((millisecond / 1000) % 60);
+        int minutes = (int) ((millisecond / (1000*60)) % 60);
+        int hours = (int) ((millisecond / (1000*60*60)) % 24);
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
     public boolean isNumeric(String str) {
@@ -312,7 +320,11 @@ public class UserMenu {
 
                 System.out.println(String.format("Registered license plate: %s", rset.getString("registered_license_plate")));
                 if (rsetTemp.next()) {
-                    System.out.println(String.format("Temporary license plate: %s", rsetTemp.getString("plate_number")));
+                    Calendar c = Calendar.getInstance();
+                    c.setTime(rsetTemp.getTimestamp("time_created"));
+                    c.add(Calendar.HOUR, 24);
+                    Long timeRemain = c.getTime().getTime() - new Date().getTime();
+                    System.out.println(String.format("Temporary license plate: %s (remain time: %s)", rsetTemp.getString("plate_number"), convertTime(timeRemain)));
                 }
                 System.out.println(String.format("Registered lot: %s", rset.getString("lot_id")));
                 System.out.println(String.format("Registered spot: %d", rset.getInt("spot_id")));
@@ -437,22 +449,32 @@ public class UserMenu {
 
                             ResultSet rset = pst.executeQuery();
 
-                            if (rset.next()) {
-                                System.out.println("\nInvalid input (You already have temporary license plate). Try again.");
-                            } else {
-                                String value = getNewValue();
-                                if (value.length() == 7) {
-                                    pst = connection.prepareStatement("INSERT INTO parking.temporary_license_plate (user_id, plate_number, time_created) VALUES (?,?,?)");
-                                    pst.setString(1, userID);
-                                    pst.setString(2, value);
-                                    pst.setTimestamp(3, new Timestamp(new Date().getTime()));
+                            String value = getNewValue();
+                            
+                            if (value.length() == 7) {
+                                if (rset.next()) {
+                                    PreparedStatement pstUpdate = connection.prepareStatement("UPDATE parking.temporary_license_plate SET plate_number = ?, time_created = ? WHERE user_id = ?");
+                                    pstUpdate.setString(1, value);
+                                    pstUpdate.setTimestamp(2, new Timestamp(new Date().getTime()));
+                                    pstUpdate.setString(3, userID);
 
-                                    pst.executeUpdate();
+                                    pstUpdate.executeUpdate();
+                                    pstUpdate.close();
 
                                     makeProfileUpdateRequest("temp_license_plate", value);
                                 } else {
-                                    System.out.println("\nInvalid input (license plate has 7 characters). Try again.");
+                                    PreparedStatement pstCreate = connection.prepareStatement("INSERT INTO parking.temporary_license_plate (user_id, plate_number, time_created) VALUES (?,?,?)");
+                                    pstCreate.setString(1, userID);
+                                    pstCreate.setString(2, value);
+                                    pstCreate.setTimestamp(3, new Timestamp(new Date().getTime()));
+
+                                    pstCreate.executeUpdate();
+                                    pstCreate.close();
+
+                                    makeProfileUpdateRequest("temp_license_plate", value);
                                 }
+                            } else {
+                                System.out.println("\nInvalid input (license plate has 7 characters). Try again.");
                             }
 
                             pst.close();
@@ -546,7 +568,7 @@ public class UserMenu {
 
     /*
          _________________________________________
-        /  TODO: Life is wonderful until you have \
+        /  Life is wonderful until you have       \
         \  to code in Java.                       /
          -----------------------------------------
                 \   ^__^
